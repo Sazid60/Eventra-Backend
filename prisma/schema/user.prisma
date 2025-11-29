@@ -1,0 +1,77 @@
+model User {
+  id                 String     @id @default(uuid())
+  email              String     @unique
+  password           String
+  role               UserRole @default(CLIENT)
+  needPasswordChange Boolean    @default(false)
+  status             UserStatus @default(ACTIVE)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  admin  Admin?
+  client Client?
+  host   Host?
+
+  @@map("users")
+}
+
+
+model Admin {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  profilePhoto  String?
+  contactNumber String
+  isDeleted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [email], references: [email])
+
+  @@map("admins")
+}
+
+
+model Client {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  profilePhoto  String?
+  contactNumber String
+  address       String
+  interests     String[] 
+  isDeleted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user            User               @relation(fields: [email], references: [email])
+  joinedEvents    EventParticipant[]
+  reviews         Review[]
+  payments        Payment[]
+
+  @@map("clients")
+}
+
+
+model Host {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  profilePhoto  String?
+  contactNumber String?
+  location      String?
+  interests     String[]  
+  isVerified    Boolean  @default(false)
+  isDeleted     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [email], references: [email])
+  events        Event[]  @relation("HostedEvents")
+  payments      Payment[]
+  reviews       Review[]
+
+  rating        Float?   @default(0)   
+  ratingCount   Int      @default(0) 
+  @@map("hosts")
+}
