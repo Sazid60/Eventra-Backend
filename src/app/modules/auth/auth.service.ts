@@ -233,6 +233,7 @@ const getMe = async (user: any) => {
 
 const applyHost = async (user: any) => {
     const accessToken = user.accessToken;
+    
     const decodedData = jwtHelper.verifyToken(
         accessToken,
         config.jwt.jwt_secret as Secret
@@ -249,17 +250,17 @@ const applyHost = async (user: any) => {
         throw new ApiError(httpStatus.NOT_FOUND, "User not found");
     }
 
-    const result = await prisma.$transaction(async (transactionClient) => {
-        const existingApplication = await transactionClient.hostApplication.findFirst({
-            where: {
-                userId: userData.id,
-                status: HostApplicationStatus.PENDING,
-            },
-        });
-        if (existingApplication) {
-            throw new ApiError(httpStatus.BAD_REQUEST, "You have already applied to be a host. Please wait for approval.");
-        }
+    const existingApplication = await prisma.hostApplication.findFirst({
+        where: {
+            userId: userData.id,
+            status: HostApplicationStatus.PENDING,
+        },
+    });
+    if (existingApplication) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "You have already applied to be a host. Please wait for approval.");
+    }
 
+    const result = await prisma.$transaction(async (transactionClient) => {
         const application = await transactionClient.hostApplication.create({
             data: {
                 userId: userData.id,

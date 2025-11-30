@@ -1,7 +1,7 @@
 model Event {
     id           String             @id @default(uuid())
     title        String
-    category     EventCategory
+    category     EventCategory[]
     description  String
     date         DateTime
     location     String

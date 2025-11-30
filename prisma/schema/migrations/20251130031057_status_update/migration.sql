@@ -1,5 +1,0 @@
--- AlterEnum
-ALTER TYPE "UserStatus" ADD VALUE 'PENDING';
-
--- AlterTable
-ALTER TABLE "admins" ADD COLUMN     "income" DOUBLE PRECISION NOT NULL DEFAULT 0;

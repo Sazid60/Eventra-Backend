@@ -21,18 +21,18 @@ router.get(
     userController.getMyProfile
 )
 
-router.post(
-    "/create-admin",
-    auth( UserRole.ADMIN),
+router.patch(
+    "/update-my-profile",
+    auth(UserRole.ADMIN, UserRole.CLIENT, UserRole.HOST),
     fileUploader.upload.single('file'),
     (req: Request, res: Response, next: NextFunction) => {
-        req.body = userValidation.createAdmin.parse(JSON.parse(req.body.data))
-        return userController.createAdmin(req, res, next)
+        req.body = JSON.parse(req.body.data)
+        return userController.updateMyProfile(req, res, next)
     }
 );
 
 
-// dummy
+
 router.post(
     "/create-client",
     fileUploader.upload.single('file'),
@@ -49,15 +49,7 @@ router.patch(
     userController.changeProfileStatus
 );
 
-router.patch(
-    "/update-my-profile",
-    auth( UserRole.ADMIN, UserRole.CLIENT),
-    fileUploader.upload.single('file'),
-    (req: Request, res: Response, next: NextFunction) => {
-        req.body = JSON.parse(req.body.data)
-        return userController.updateMyProfile(req, res, next)
-    }
-);
+
 
 
 export const userRoutes = router;
