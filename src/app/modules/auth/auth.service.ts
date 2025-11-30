@@ -144,40 +144,91 @@ const resetPassword = async (token: string, payload: { id: string, password: str
 };
 
 const getMe = async (user: any) => {
-    const accessToken = user.accessToken;
-    const decodedData = jwtHelper.verifyToken(accessToken, config.jwt.jwt_secret as Secret);
+  const accessToken = user.accessToken;
 
-    const userData = await prisma.user.findUniqueOrThrow({
-        where: {
-            email: decodedData.email,
-            status: UserStatus.ACTIVE
-        },
-        select: {
-            id: true,
-            email: true,
-            role: true,
-            needPasswordChange: true,
-            status: true,
-            createdAt: true,
-            updatedAt: true,
-            admin: {
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    profilePhoto: true,
-                    contactNumber: true,
-                    isDeleted: true,
-                    createdAt: true,
-                    updatedAt: true,
-                }
-            },
+  const decodedData = jwtHelper.verifyToken(
+    accessToken,
+    config.jwt.jwt_secret as Secret
+  );
 
-        }
-    });
+  const role = decodedData.role; 
 
-    return userData;
-}
+  let includeOptions: any = {};
+
+  if (role === "ADMIN") {
+    includeOptions.admin = {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        profilePhoto: true,
+        contactNumber: true,
+        income: true,
+        isDeleted: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    };
+  }
+
+  if (role === "CLIENT") {
+    includeOptions.client = {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        profilePhoto: true,
+        bio: true,
+        contactNumber: true,
+        location: true,
+        interests: true,
+        isDeleted: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    };
+  }
+
+  if (role === "HOST") {
+    includeOptions.host = {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        profilePhoto: true,
+        bio: true,
+        contactNumber: true,
+        location: true,
+        income: true,
+        rating: true,
+        ratingCount: true,
+        isDeleted: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    };
+  }
+
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: decodedData.email,
+      status: UserStatus.ACTIVE,
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      needPasswordChange: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      ...includeOptions, 
+    },
+  });
+
+  return userData;
+};
+
 
 
 

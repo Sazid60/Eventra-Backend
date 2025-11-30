@@ -19,7 +19,7 @@ const createAdmin = z.object({
 });
 
 
-// Convert Prisma enum to Zod enum (optional if you're hardcoding strings)
+
 const InterestEnum = z.enum([
     "MUSIC", "SPORTS", "HIKING", "TRAVEL", "COOKING", "READING", "DANCING",
     "GAMING", "TECHNOLOGY", "PHOTOGRAPHY", "ART", "MOVIES", "FITNESS", "YOGA",
