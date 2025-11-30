@@ -102,7 +102,7 @@ const approveHostApplication = async (id: string) => {
         throw new Error("Client info not found");
     }
 
-        if (isHostApplicationExist.status === HostApplicationStatus.REJECTED) {
+    if (isHostApplicationExist.status === HostApplicationStatus.REJECTED) {
         throw new Error("This host application is already rejected.");
     }
 

@@ -1,23 +1,5 @@
-import { Gender, UserStatus } from "@prisma/client";
+import { Gender, UserRole, UserStatus } from "@prisma/client";
 import { z } from "zod";
-
-const createAdmin = z.object({
-    password: z.string({
-        error: "Password is required",
-    }),
-    admin: z.object({
-        name: z.string({
-            error: "Name is required!",
-        }),
-        email: z.string({
-            error: "Email is required!",
-        }),
-        contactNumber: z.string({
-            error: "Contact Number is required!",
-        }),
-    }),
-});
-
 
 
 const InterestEnum = z.enum([
@@ -70,8 +52,47 @@ const updateStatus = z.object({
     }),
 });
 
+
+
+// Shared fields across all roles
+const sharedFields = {
+    name: z.string().optional(),
+    profilePhoto: z.string().url().optional(),
+    contactNumber: z.string().optional(),
+    bio: z.string().optional(),
+    location: z.string().optional(),
+};
+
+// Admin update schema
+const updateAdmin = z.object({
+    role: z.literal(UserRole.ADMIN).optional(),
+    admin: z.object({
+        ...sharedFields,
+    }).partial(),
+});
+
+// Client update schema
+const updateClient = z.object({
+    role: z.literal(UserRole.CLIENT).optional(),
+    client: z.object({
+        ...sharedFields,
+        interests: z.array(InterestEnum).optional(),
+    }).partial(),
+});
+
+// Host update schema
+const updateHost = z.object({
+    role: z.literal(UserRole.HOST).optional(),
+    host: z.object({
+        ...sharedFields,
+    }).partial(),
+});
+
+// Unified update schema
+ const updateProfile = z.union([updateAdmin, updateClient, updateHost]);
+
 export const userValidation = {
-    createAdmin,
     createClient,
     updateStatus,
+    updateProfile
 };

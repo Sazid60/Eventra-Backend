@@ -9,46 +9,6 @@ import { IAuthUser } from "../../interfaces/common";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { userSearchAbleFields } from "./user.constant";
 
-const createAdmin = async (req: Request): Promise<Admin> => {
-
-    const file = req.file;
-
-    let uploadedPublicId: string | undefined;
-    if (file) {
-        const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
-        req.body.admin.profilePhoto = uploadToCloudinary?.secure_url;
-        uploadedPublicId = (uploadToCloudinary as any)?.public_id;
-    }
-
-    const hashedPassword: string = await bcrypt.hash(req.body.password, Number(config.salt_round))
-
-    const userData = {
-        email: req.body.admin.email,
-        password: hashedPassword,
-        role: UserRole.ADMIN
-    }
-
-    try {
-        const result = await prisma.$transaction(async (transactionClient) => {
-            await transactionClient.user.create({
-                data: userData
-            });
-
-            const createdAdminData = await transactionClient.admin.create({
-                data: req.body.admin
-            });
-
-            return createdAdminData;
-        });
-
-        return result;
-    } catch (error) {
-        if (uploadedPublicId) {
-            await fileUploader.deleteFromCloudinary(uploadedPublicId as string);
-        }
-        throw error;
-    }
-};
 
 
 
@@ -178,98 +138,103 @@ const changeProfileStatus = async (id: string, status: UserRole) => {
 };
 
 const getMyProfile = async (user: IAuthUser) => {
-  // Fetch base user
-  const userInfo = await prisma.user.findUniqueOrThrow({
-    where: {
-      email: user?.email,
-      status: UserStatus.ACTIVE,
-    },
-    select: {
-      id: true,
-      email: true,
-      needPasswordChange: true,
-      role: true,
-      status: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-
-  let profileInfo = null;
-
-  // ==================== ADMIN ====================
-  if (userInfo.role === UserRole.ADMIN) {
-    profileInfo = await prisma.admin.findUnique({
-      where: { email: userInfo.email },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        profilePhoto: true,
-        contactNumber: true,
-        income: true,
-        isDeleted: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    // Fetch base user
+    const userInfo = await prisma.user.findUniqueOrThrow({
+        where: {
+            email: user?.email,
+            status: UserStatus.ACTIVE,
+        },
+        select: {
+            id: true,
+            email: true,
+            needPasswordChange: true,
+            role: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+        },
     });
-  }
 
-  // ==================== CLIENT ====================
-  else if (userInfo.role === UserRole.CLIENT) {
-    profileInfo = await prisma.client.findUnique({
-      where: { email: userInfo.email },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        profilePhoto: true,
-        bio: true,
-        contactNumber: true,
-        location: true,
-        interests: true,
-        isDeleted: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-  }
+    let profileInfo = null;
 
-  // ==================== HOST ====================
-  else if (userInfo.role === UserRole.HOST) {
-    profileInfo = await prisma.host.findUnique({
-      where: { email: userInfo.email },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        profilePhoto: true,
-        bio: true,
-        contactNumber: true,
-        location: true,
-        income: true,
-        rating: true,
-        ratingCount: true,
-        isDeleted: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-  }
+    // ==================== ADMIN ====================
+    if (userInfo.role === UserRole.ADMIN) {
+        profileInfo = await prisma.admin.findUnique({
+            where: { email: userInfo.email },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                profilePhoto: true,
+                contactNumber: true,
+                income: true,
+                isDeleted: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+    }
 
-  // Merge results and return
-  return { ...userInfo, ...profileInfo };
+    // ==================== CLIENT ====================
+    else if (userInfo.role === UserRole.CLIENT) {
+        profileInfo = await prisma.client.findUnique({
+            where: { email: userInfo.email },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                profilePhoto: true,
+                bio: true,
+                contactNumber: true,
+                location: true,
+                interests: true,
+                isDeleted: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+    }
+
+    // ==================== HOST ====================
+    else if (userInfo.role === UserRole.HOST) {
+        profileInfo = await prisma.host.findUnique({
+            where: { email: userInfo.email },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                profilePhoto: true,
+                bio: true,
+                contactNumber: true,
+                location: true,
+                income: true,
+                rating: true,
+                ratingCount: true,
+                isDeleted: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+    }
+
+    // Merge results and return
+    return { ...userInfo, ...profileInfo };
 };
 
 
 
 const updateMyProfile = async (user: IAuthUser, req: Request) => {
+
+    console.log(JSON.stringify(req.body))
+
     const userInfo = await prisma.user.findUniqueOrThrow({
         where: {
             email: user?.email,
             status: UserStatus.ACTIVE
         }
     });
+
+    console.log(userInfo)
 
 
     const file = req.file;
@@ -290,10 +255,31 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
                 },
                 data: req.body
             })
-        }
+        } else if (userInfo.role === UserRole.CLIENT) {
 
-        else if (userInfo.role === UserRole.CLIENT) {
+            const existingClient = await prisma.client.findUnique({
+                where: { email: userInfo.email },
+            });
+
+            // Handle interests merging
+            if (req.body?.interests) {
+                const oldInterests = existingClient?.interests || [];
+
+                if (req.body.interests.length === 0) {
+                    req.body.interests = oldInterests;
+                } else {
+                    req.body.interests = Array.from(
+                        new Set([...oldInterests, ...req.body.interests])
+                    );
+                }
+            }
+
             profileInfo = await prisma.client.update({
+                where: { email: userInfo.email },
+                data: req.body,
+            });
+        } else if (userInfo.role === UserRole.HOST) {
+            profileInfo = await prisma.host.update({
                 where: {
                     email: userInfo.email
                 },
@@ -311,8 +297,8 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
 }
 
 
+
 export const userService = {
-    createAdmin,
     createClient,
     getAllFromDB,
     changeProfileStatus,
