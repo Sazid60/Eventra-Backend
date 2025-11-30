@@ -8,6 +8,13 @@ enum UserStatus {
   ACTIVE
   SUSPENDED
   DELETED
+  PENDING
+}
+
+enum HostApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum EventStatus {
@@ -26,3 +33,115 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum Gender {
+  MALE
+  FEMALE
+}
+
+
+enum EventCategory {
+  // Entertainment
+  MUSIC
+  MOVIE
+  THEATER
+  COMEDY
+  PARTY
+  NIGHTLIFE
+  CONCERT
+  FESTIVAL
+
+  // Sports & Outdoors
+  SPORTS
+  HIKING
+  CYCLING
+  RUNNING
+  FITNESS
+  CAMPING
+  OUTDOOR
+  ADVENTURE
+
+  // Social & Community
+  SOCIAL
+  NETWORKING
+  MEETUP
+  COMMUNITY
+  VOLUNTEERING
+  CULTURE
+  RELIGION
+
+  // Food & Dining
+  FOOD
+  DINNER
+  COOKING
+  TASTING
+  CAFE
+  RESTAURANT
+
+  // Education & Workshops
+  TECH
+  WORKSHOP
+  SEMINAR
+  CONFERENCE
+  EDUCATION
+  LANGUAGE
+  BUSINESS
+  FINANCE
+
+  // Hobbies & Creative
+  ART
+  CRAFT
+  PHOTOGRAPHY
+  PAINTING
+  WRITING
+  DANCE
+
+  // Gaming & Online
+  GAMING
+  ESPORTS
+  BOARDGAME
+  CARDGAME
+  ONLINE_EVENT
+
+  // Travel & Exploration
+  TRAVEL
+  TOUR
+  ROADTRIP
+
+  // Default fallback
+  OTHER
+}
+
+
+enum Interest {
+  MUSIC
+  SPORTS
+  HIKING
+  TRAVEL
+  COOKING
+  READING
+  DANCING
+  GAMING
+  TECHNOLOGY
+  PHOTOGRAPHY
+  ART
+  MOVIES
+  FITNESS
+  YOGA
+  CYCLING
+  RUNNING
+  CAMPING
+  FISHING
+  LANGUAGES
+  FOOD
+  VOLUNTEERING
+  GARDENING
+  WRITING
+  FASHION
+  BUSINESS
+  FINANCE
+  MEDITATION
+  DIY
+  PETS
+  SOCIALIZING
+  OTHER
+}

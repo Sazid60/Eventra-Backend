@@ -1,7 +1,7 @@
 import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { AdminService } from './admin.service';
 import pick from '../../../shared/pick';
-import { adminFilterableFields } from './admin.constant';
+import { adminFilterableFields, hostSearchableFields } from './admin.constant';
 
 import httpStatus from 'http-status';
 import { sendResponse } from '../../../shared/sendResponse';
@@ -61,6 +61,19 @@ const deleteFromDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 
+// get all host applications
+const getAllHostApplications: RequestHandler = catchAsync(async (req: Request, res: Response) => {
+    const filters = pick(req.query, hostSearchableFields);
+    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
+    const result = await AdminService.getAllHostApplications(filters, options);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "All Host applications fetched!",
+        data: result
+    });
+});
 
 
 export const AdminController = {
@@ -68,4 +81,5 @@ export const AdminController = {
     getByIdFromDB,
     updateIntoDB,
     deleteFromDB,
+    getAllHostApplications
 }

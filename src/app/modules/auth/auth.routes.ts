@@ -20,9 +20,7 @@ router.post(
 
 router.post(
     '/change-password',
-    auth(
-        UserRole.ADMIN,
-    ),
+    auth(UserRole.ADMIN, UserRole.CLIENT, UserRole.HOST),
     AuthController.changePassword
 );
 
@@ -33,12 +31,18 @@ router.post(
 
 router.post(
     '/reset-password',
+    auth(UserRole.ADMIN, UserRole.CLIENT, UserRole.HOST),
     AuthController.resetPassword
 )
 
 router.get(
     '/me',
+    auth(UserRole.ADMIN, UserRole.CLIENT, UserRole.HOST),
     AuthController.getMe
 )
-
+router.post(
+    '/apply-host',
+    auth(UserRole.CLIENT),
+    AuthController.applyHost
+)
 export const AuthRoutes = router;
