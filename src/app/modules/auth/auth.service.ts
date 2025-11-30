@@ -243,9 +243,9 @@ const applyHost = async (user: any) => {
         }
     });
 
-    
 
-    if(!userData){
+
+    if (!userData) {
         throw new ApiError(httpStatus.NOT_FOUND, "User not found");
     }
 
@@ -275,7 +275,34 @@ const applyHost = async (user: any) => {
             }
         });
 
-        return {...application, ...userUpdate};
+        // send email to host new host application
+        // await sendEmail({
+        //     to,
+        //     subject: "Host Application Submitted",
+        //     templateName: "host-application-submitted",
+        //     templateData: {
+        //         name,
+        //         applicationId,
+        //     }
+        // })
+
+        const clientData = await transactionClient.client.findFirst({
+            where: {
+                email: userData.email
+            }
+        });
+
+        await sendEmail({
+            to: userData.email,
+            subject: "Your Host Application Submitted",
+            templateName: "host-application-submitted",
+            templateData: {
+                name: clientData ? clientData.name : userData.email.split("@")[0],
+                applicationId: application.id,
+            }
+        });
+
+        return { ...application, ...userUpdate };
     });
 
     return result;
