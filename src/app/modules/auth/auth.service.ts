@@ -10,7 +10,7 @@ import config from "../../../config";
 import { jwtHelper } from "../../../helpers/jwtHelper";
 import { sendEmail } from "../../../helpers/sendEmail";
 import prisma from '../../../shared/prisma';
-import { UserStatus } from '@prisma/client';
+import { HostApplicationStatus, UserStatus } from '@prisma/client';
 import httpStatus from 'http-status-codes';
 
 
@@ -83,7 +83,7 @@ const changePassword = async (user: any, payload: any) => {
 const forgotPassword = async (payload: { email: string }) => {
 
     console.log(payload)
-    
+
     const userData = await prisma.user.findFirstOrThrow({
         where: {
             email: payload.email,
@@ -144,93 +144,142 @@ const resetPassword = async (token: string, payload: { id: string, password: str
 };
 
 const getMe = async (user: any) => {
-  const accessToken = user.accessToken;
+    const accessToken = user.accessToken;
 
-  const decodedData = jwtHelper.verifyToken(
-    accessToken,
-    config.jwt.jwt_secret as Secret
-  );
+    const decodedData = jwtHelper.verifyToken(
+        accessToken,
+        config.jwt.jwt_secret as Secret
+    );
 
-  const role = decodedData.role; 
+    const role = decodedData.role;
 
-  let includeOptions: any = {};
+    let includeOptions: any = {};
 
-  if (role === "ADMIN") {
-    includeOptions.admin = {
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        profilePhoto: true,
-        contactNumber: true,
-        income: true,
-        isDeleted: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    };
-  }
+    if (role === "ADMIN") {
+        includeOptions.admin = {
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                profilePhoto: true,
+                contactNumber: true,
+                income: true,
+                isDeleted: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        };
+    }
 
-  if (role === "CLIENT") {
-    includeOptions.client = {
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        profilePhoto: true,
-        bio: true,
-        contactNumber: true,
-        location: true,
-        interests: true,
-        isDeleted: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    };
-  }
+    if (role === "CLIENT") {
+        includeOptions.client = {
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                profilePhoto: true,
+                bio: true,
+                contactNumber: true,
+                location: true,
+                interests: true,
+                isDeleted: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        };
+    }
 
-  if (role === "HOST") {
-    includeOptions.host = {
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        profilePhoto: true,
-        bio: true,
-        contactNumber: true,
-        location: true,
-        income: true,
-        rating: true,
-        ratingCount: true,
-        isDeleted: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    };
-  }
+    if (role === "HOST") {
+        includeOptions.host = {
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                profilePhoto: true,
+                bio: true,
+                contactNumber: true,
+                location: true,
+                income: true,
+                rating: true,
+                ratingCount: true,
+                isDeleted: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        };
+    }
 
-  const userData = await prisma.user.findUniqueOrThrow({
-    where: {
-      email: decodedData.email,
-      status: UserStatus.ACTIVE,
-    },
-    select: {
-      id: true,
-      email: true,
-      role: true,
-      needPasswordChange: true,
-      status: true,
-      createdAt: true,
-      updatedAt: true,
-      ...includeOptions, 
-    },
-  });
+    const userData = await prisma.user.findUniqueOrThrow({
+        where: {
+            email: decodedData.email,
+            status: UserStatus.ACTIVE,
+        },
+        select: {
+            id: true,
+            email: true,
+            role: true,
+            needPasswordChange: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+            ...includeOptions,
+        },
+    });
 
-  return userData;
+    return userData;
 };
 
 
 
+const applyHost = async (user: any) => {
+    const accessToken = user.accessToken;
+    const decodedData = jwtHelper.verifyToken(
+        accessToken,
+        config.jwt.jwt_secret as Secret
+    );
+    const userData = await prisma.user.findUniqueOrThrow({
+        where: {
+            id: decodedData.userId
+        }
+    });
+
+    
+
+    if(!userData){
+        throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    const result = await prisma.$transaction(async (transactionClient) => {
+        const existingApplication = await transactionClient.hostApplication.findFirst({
+            where: {
+                userId: userData.id,
+                status: HostApplicationStatus.PENDING,
+            },
+        });
+        if (existingApplication) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "You have already applied to be a host. Please wait for approval.");
+        }
+
+        const application = await transactionClient.hostApplication.create({
+            data: {
+                userId: userData.id,
+            }
+        });
+
+        const userUpdate = await transactionClient.user.update({
+            where: {
+                id: userData.id,
+            },
+            data: {
+                status: UserStatus.PENDING,
+            }
+        });
+
+        return {...application, ...userUpdate};
+    });
+
+    return result;
+};
 
 export const AuthServices = {
     loginUser,
@@ -238,5 +287,6 @@ export const AuthServices = {
     changePassword,
     forgotPassword,
     resetPassword,
-    getMe
+    getMe,
+    applyHost
 }

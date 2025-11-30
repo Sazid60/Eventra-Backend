@@ -123,7 +123,7 @@ const deleteFromDB = async (id: string): Promise<Admin | null> => {
     return result;
 }
 
-
+// approve host application
 
 
 export const AdminService = {

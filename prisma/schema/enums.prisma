@@ -11,6 +11,12 @@ enum UserStatus {
   PENDING
 }
 
+enum HostApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum EventStatus {
   PENDING
   REJECTED
