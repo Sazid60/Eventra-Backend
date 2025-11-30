@@ -275,17 +275,6 @@ const applyHost = async (user: any) => {
             }
         });
 
-        // send email to host new host application
-        // await sendEmail({
-        //     to,
-        //     subject: "Host Application Submitted",
-        //     templateName: "host-application-submitted",
-        //     templateData: {
-        //         name,
-        //         applicationId,
-        //     }
-        // })
-
         const clientData = await transactionClient.client.findFirst({
             where: {
                 email: userData.email

@@ -9,31 +9,7 @@ import { catchAsync } from '../../../shared/catchAsync';
 
 
 
-const getAllFromDB: RequestHandler = catchAsync(async (req: Request, res: Response) => {
-    const filters = pick(req.query, adminFilterableFields);
-    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
-    const result = await AdminService.getAllFromDB(filters, options)
 
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message: "Admin data fetched!",
-        meta: result.meta,
-        data: result.data
-    })
-})
-
-const getByIdFromDB = catchAsync(async (req: Request, res: Response) => {
-    const { id } = req.params;
-
-    const result = await AdminService.getByIdFromDB(id);
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message: "Admin data fetched by id!",
-        data: result
-    });
-})
 
 
 const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
@@ -48,17 +24,7 @@ const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
     })
 })
 
-const deleteFromDB = catchAsync(async (req: Request, res: Response) => {
-    const { id } = req.params;
 
-    const result = await AdminService.deleteFromDB(id);
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message: "Admin data deleted!",
-        data: result
-    })
-})
 
 
 // get all host applications
@@ -75,11 +41,38 @@ const getAllHostApplications: RequestHandler = catchAsync(async (req: Request, r
     });
 });
 
+//  approve host application 
 
-export const AdminController = {
-    getAllFromDB,
-    getByIdFromDB,
-    updateIntoDB,
-    deleteFromDB,
-    getAllHostApplications
-}
+const approveHost = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const result = await AdminService.approveHostApplication(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Host application approved!",
+        data: result
+    })
+});
+
+
+// reject host 
+
+const rejectHost = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const result = await AdminService.rejectHostApplication(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Host application rejected!",
+        data: result
+    })
+});
+
+    export const AdminController = {
+        updateIntoDB,
+        getAllHostApplications,
+        approveHost,
+        rejectHost
+    }
