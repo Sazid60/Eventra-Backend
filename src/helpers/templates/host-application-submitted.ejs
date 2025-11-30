@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Host Application Submitted</title>
+  </head>
+  <body>
+    <div>
+      <p>Dear <%= name %>,</p>
+      <p>
+        Thank you for applying to become a host on our platform. Your
+        application has been submitted successfully and is under review by our
+        team.
+      </p>
+
+      <% if (typeof applicationId !== 'undefined' && applicationId) { %>
+      <p>
+        Your application reference ID is: <strong><%= applicationId %></strong>
+      </p>
+      <% } %>
+
+      <p>
+        We will notify you by email once a decision has been made. In the
+        meantime, feel free to reach out if you have any questions.
+      </p>
+
+      <p>Best regards,<br />The Team</p>
+    </div>
+  </body>
+</html>

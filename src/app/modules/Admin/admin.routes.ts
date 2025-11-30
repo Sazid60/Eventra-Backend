@@ -16,17 +16,21 @@ router.get(
     AdminController.getAllHostApplications
 );
 
-router.get(
-    '/',
+// approve host application
+router.patch(
+    '/host-applications/:id/approve',
     auth(UserRole.ADMIN),
-    AdminController.getAllFromDB
+    AdminController.approveHost
 );
 
-router.get(
-    '/:id',
-    auth( UserRole.ADMIN),
-    AdminController.getByIdFromDB
+// reject host application
+router.patch(
+    '/host-applications/:id/reject',
+    auth(UserRole.ADMIN),
+    AdminController.rejectHost
 );
+
+
 
 router.patch(
     '/:id',
@@ -35,11 +39,7 @@ router.patch(
     AdminController.updateIntoDB
 );
 
-router.delete(
-    '/:id',
-    auth( UserRole.ADMIN),
-    AdminController.deleteFromDB
-);
+
 
 
 
