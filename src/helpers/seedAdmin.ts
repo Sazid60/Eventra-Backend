@@ -31,8 +31,8 @@ const seedSuperAdmin = async () => {
                 admin: {
                     create: {
                         name: "Admin",
-                        //email: "super@admin.com",
-                        contactNumber: "01234567890"
+                        profilePhoto: "https://res.cloudinary.com/dosvjludu/image/upload/v1759681814/c1309i14mi8-1759681814423-sazid-webp.webp.webp",   
+                        contactNumber: "+8801234567890"
                     }
                 }
             }

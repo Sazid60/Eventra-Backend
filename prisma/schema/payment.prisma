@@ -12,7 +12,7 @@ model Payment {
 
     event  Event  @relation(fields: [eventId], references: [id])
     client Client @relation(fields: [clientId], references: [id])
-    host   Host   @relation(fields: [hostId], references: [id])
+    // host   Host   @relation(fields: [hostId], references: [id])
 
     @@map("payments")
 }
