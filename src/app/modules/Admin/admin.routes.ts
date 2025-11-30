@@ -9,6 +9,13 @@ import { UserRole } from '@prisma/client';
 
 const router = express.Router();
 
+// get all host application 
+router.get(
+    '/host-applications',
+    auth(UserRole.ADMIN),
+    AdminController.getAllHostApplications
+);
+
 router.get(
     '/',
     auth(UserRole.ADMIN),
@@ -23,7 +30,7 @@ router.get(
 
 router.patch(
     '/:id',
-    auth( UserRole.ADMIN),
+    auth(UserRole.ADMIN),
     validateRequest(adminValidationSchemas.update),
     AdminController.updateIntoDB
 );
@@ -33,6 +40,7 @@ router.delete(
     auth( UserRole.ADMIN),
     AdminController.deleteFromDB
 );
+
 
 
 export const AdminRoutes = router;
