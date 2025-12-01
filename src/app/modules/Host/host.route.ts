@@ -22,7 +22,7 @@ router.post(
 
 // get my events 
 router.get(
-    '/my-events',
+    '/my-hosted-events',
     auth(UserRole.HOST),
     hostController.getMyEvents
 );
