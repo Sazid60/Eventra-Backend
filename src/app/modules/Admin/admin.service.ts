@@ -1,39 +1,16 @@
 
 
-import { Admin, HostApplicationStatus, Prisma, UserRole, UserStatus } from "@prisma/client";
+import { Admin, EventCategory, EventStatus, HostApplicationStatus, Prisma, UserRole, UserStatus } from "@prisma/client";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 
 
 import { IPaginationOptions } from "../../interfaces/pagination";
-import { adminSearchAbleFields } from "./admin.constant";
-import { IAdminFilterRequest } from "./admin.interface";
+import { adminSearchAbleFields, eventSearchableFields } from "./admin.constant";
 import prisma from "../../../shared/prisma";
 import { sendEmail } from "../../../helpers/sendEmail";
 
 
-
-const updateIntoDB = async (id: string, data: Partial<Admin>): Promise<Admin> => {
-    await prisma.admin.findUniqueOrThrow({
-        where: {
-            id,
-            isDeleted: false
-        }
-    });
-
-    const result = await prisma.admin.update({
-        where: {
-            id
-        },
-        data
-    });
-
-    return result;
-};
-
-
-
-// get all host applications
-const getAllHostApplications = async (params: IAdminFilterRequest, options: IPaginationOptions) => {
+const getAllHostApplications = async (params: any, options: IPaginationOptions) => {
     const { page, limit, skip } = paginationHelper.calculatePagination(options);
     const { searchTerm, ...filterData } = params;
     const andConditions: Prisma.AdminWhereInput[] = [];
@@ -83,9 +60,75 @@ const getAllHostApplications = async (params: IAdminFilterRequest, options: IPag
             limit,
             total
         },
-        data: result
+        hostRequests: result
     };
 }
+
+const getAllEventApplications = async (params: any, options: IPaginationOptions) => {
+    const { page, limit, skip } = paginationHelper.calculatePagination(options);
+    const { searchTerm, category, date, status, ...filterData } = params;
+
+    const andConditions: Prisma.EventWhereInput[] = [];
+
+    if (searchTerm) {
+        andConditions.push({
+            OR: eventSearchableFields.map(field => ({
+                [field]: { contains: String(searchTerm), mode: 'insensitive' }
+            }))
+        });
+    }
+
+    if (status) {
+        andConditions.push({ status: status as any });
+    }
+
+    if (category) {
+        andConditions.push({
+            category: {
+                has: category as EventCategory
+            }
+        });
+    }
+
+    if (date) {
+        const parsed = new Date(String(date));
+        if (!isNaN(parsed.getTime())) {
+            const start = new Date(parsed);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(parsed);
+            end.setHours(23, 59, 59, 999);
+            andConditions.push({ date: { gte: start, lte: end } } as any);
+        }
+    }
+
+    if (Object.keys(filterData).length > 0) {
+        andConditions.push({
+            AND: Object.keys(filterData).map(key => ({
+                [key]: { equals: (filterData as any)[key] }
+            }))
+        } as any);
+    }
+
+    const whereConditions: Prisma.EventWhereInput = andConditions.length > 0 ? { AND: andConditions as any } : {};
+
+    const result = await prisma.event.findMany({
+        where: whereConditions,
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder ? { [options.sortBy]: options.sortOrder } : { createdAt: 'desc' },
+        include: { host: true }
+    });
+
+    const total = await prisma.event.count({ where: whereConditions });
+
+    return {
+        meta: { page, limit, total },
+        eventRequests: result
+    };
+};
+
+// approve event
+
 
 // approve host application
 const approveHostApplication = async (id: string) => {
@@ -93,6 +136,8 @@ const approveHostApplication = async (id: string) => {
         where: { id },
         include: { user: true }
     });
+
+    console.log(isHostApplicationExist)
 
     const existingClientInfo = await prisma.client.findUnique({
         where: { email: isHostApplicationExist.user.email }
@@ -141,6 +186,7 @@ const approveHostApplication = async (id: string) => {
                 profilePhoto: existingClientInfo.profilePhoto,
                 contactNumber: existingClientInfo.contactNumber,
                 bio: existingClientInfo.bio,
+                interests : existingClientInfo.interests,
                 location: existingClientInfo.location
             }
         });
@@ -163,7 +209,7 @@ const approveHostApplication = async (id: string) => {
     return result;
 };
 
-
+// reject host application
 const rejectHostApplication = async (id: string) => {
     const isHostApplicationExist = await prisma.hostApplication.findUniqueOrThrow({
         where: { id },
@@ -218,10 +264,76 @@ const rejectHostApplication = async (id: string) => {
     return result;
 };
 
+// approve event into DB
+const approveEventIntoDB = async (id: string) => {
+    console.log(id)
+    const isEventExist = await prisma.event.findUniqueOrThrow({
+        where: { id }
+    });
+
+    if (!isEventExist) {
+        throw new Error("Event not found!");
+    }
+
+    if (isEventExist.status !== 'PENDING') {
+        throw new Error("Only PENDING events can be approved.");
+    }
+    const result = await prisma.event.update({
+        where: { id },
+        include: { host: true },
+        data: { status: EventStatus.OPEN }
+    });
+
+    await sendEmail({
+        to: result.host.email,
+        subject: "Event Application Approval Update",
+        templateName: "event-application-approved",
+        templateData: {
+            name: result.host.name,
+        }
+    });
+
+    return result;
+};
+
+// reject event into db 
+const rejectEvent = async (id: string) => {
+    const isEventExist = await prisma.event.findUniqueOrThrow({
+        where: { id }
+    });
+
+    console.log(isEventExist)
+
+    if (!isEventExist) {
+        throw new Error("Event not found!");
+    }
+
+    if (isEventExist.status !== 'PENDING') {
+        throw new Error("Only PENDING events can be rejected.");
+    }
+
+    const result = await prisma.event.update({
+        where: { id },
+        include: { host: true },
+        data: { status: EventStatus.REJECTED }
+    });
+
+    await sendEmail({
+        to: result.host.email,
+        subject: "Event Application Rejected",
+        templateName: "event-application-rejected",
+        templateData: {
+            name: result.host.name,
+        }
+    });
+    return result;
+}
 
 export const AdminService = {
-    updateIntoDB,
+    getAllEventApplications,
+    approveEventIntoDB,
     getAllHostApplications,
     approveHostApplication,
-    rejectHostApplication
+    rejectHostApplication,
+    rejectEvent
 }

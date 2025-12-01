@@ -19,6 +19,14 @@ router.post(
         return hostController.createEvent(req, res, next)
     }
 );
+
+// get my events 
+router.get(
+    '/my-hosted-events',
+    auth(UserRole.HOST),
+    hostController.getMyEvents
+);
+
 // update event 
 
 router.patch(
@@ -38,6 +46,15 @@ router.delete(
     auth(UserRole.HOST),
     hostController.deleteEvent
 );
+
+// event status update route 
+
+router.patch(
+    '/event/:id/cancel',
+    auth(UserRole.HOST),
+    hostController.cancelEvent
+);
+
 
 
 

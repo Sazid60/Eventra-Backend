@@ -1,11 +1,13 @@
-import { Event, EventStatus } from "@prisma/client";
+import { Event, EventCategory, EventStatus, Prisma } from "@prisma/client";
 import { fileUploader } from "../../../helpers/fileUploader";
 import config from "../../../config";
 import prisma from "../../../shared/prisma";
-import * as bcrypt from 'bcryptjs';
 import { Request } from "express";
 import { Secret } from "jsonwebtoken";
 import { jwtHelper } from "../../../helpers/jwtHelper";
+import { IPaginationOptions } from "../../interfaces/pagination";
+import { paginationHelper } from "../../../helpers/paginationHelper";
+import { eventSearchableFields } from "../Admin/admin.constant";
 
 const createEvent = async (req: Request): Promise<Event> => {
     const file = req.file;
@@ -140,9 +142,120 @@ const updateEvent = async (id: string, req: Request): Promise<Event> => {
 };
 
 
+const cancelEvent = async (id: string) => {
+    const isEventExist = await prisma.event.findUniqueOrThrow({
+        where: { id }
+    });
+
+    console.log(isEventExist)
+
+    if (!isEventExist) {
+        throw new Error("Event not found!");
+    }
+
+    if (isEventExist.status !== 'PENDING') {
+        throw new Error("Only PENDING events can be canceled.");
+    }
+
+    const result = await prisma.event.update({
+        where: { id },
+        include: { host: true },
+        data: { status: EventStatus.REJECTED }
+    });
+
+    return result;
+}
+
+// get my events
+const getMyEvents = async (user: any, params: any, options: IPaginationOptions) => {
+    const { page, limit, skip } = paginationHelper.calculatePagination(options);
+    const { searchTerm, category, date, status, ...filterData } = params;
+
+    const accessToken = user.accessToken;
+
+    const decodedData = jwtHelper.verifyToken(
+        accessToken,
+        config.jwt.jwt_secret as Secret
+    );
+
+    const userInfo = await prisma.user.findUniqueOrThrow({
+        where: {
+            id: decodedData.userId
+        },
+        include:{
+            host: true
+        }
+    });
+
+    if(!userInfo.host){
+        throw new Error("Host information not found for the user.");
+    }
+
+    const andConditions: Prisma.EventWhereInput[] = [];
+
+    andConditions.push({ hostId: userInfo.host.id });
+    if (searchTerm) {
+        andConditions.push({
+            OR: eventSearchableFields.map(field => ({
+                [field]: { contains: String(searchTerm), mode: 'insensitive' }
+            }))
+        });
+    }
+
+    if (status) {
+        andConditions.push({ status: status as any });
+    }
+
+    if (category) {
+        andConditions.push({
+            category: {
+                has: category as EventCategory
+            }
+        });
+    }
+
+    if (date) {
+        const parsed = new Date(String(date));
+        if (!isNaN(parsed.getTime())) {
+            const start = new Date(parsed);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(parsed);
+            end.setHours(23, 59, 59, 999);
+            andConditions.push({ date: { gte: start, lte: end } } as any);
+        }
+    }
+
+    if (Object.keys(filterData).length > 0) {
+        andConditions.push({
+            AND: Object.keys(filterData).map(key => ({
+                [key]: { equals: (filterData as any)[key] }
+            }))
+        } as any);
+    }
+
+    const whereConditions: Prisma.EventWhereInput = andConditions.length > 0 ? { AND: andConditions as any } : {};
+
+    const result = await prisma.event.findMany({
+        where: whereConditions,
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder ? { [options.sortBy]: options.sortOrder } : { createdAt: 'desc' },
+        include: { host: true }
+    });
+
+    const total = await prisma.event.count({ where: whereConditions });
+
+    return {
+        meta: { page, limit, total },
+        eventRequests: result
+    };
+};
+
 
 export const hostService = {
     createEvent,
     deleteEvent,
-    updateEvent
+    updateEvent,
+    cancelEvent,
+    getMyEvents
 };

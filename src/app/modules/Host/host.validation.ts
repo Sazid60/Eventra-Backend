@@ -12,7 +12,7 @@ const EventCategoryEnum = z.enum([
     "TECH", "WORKSHOP", "SEMINAR", "CONFERENCE", "EDUCATION",
     "LANGUAGE", "BUSINESS", "FINANCE",
     "ART", "CRAFT", "PHOTOGRAPHY", "PAINTING", "WRITING", "DANCE",
-    "GAMING", "ESPORTS", "BOARDGAME", "CARDGAME", "ONLINE_EVENT",
+    "GAMING", "ESPORTS", "ONLINE_EVENT",
     "TRAVEL", "TOUR", "ROADTRIP",
     "OTHER",
 ]);
@@ -45,11 +45,7 @@ const createEvent = z.object({
 
     capacity: z.number({
         error: "Event capacity is required!",
-    }),
-
-    hostId: z.string({
-        error: "Host ID is required!",
-    }),
+    })
 });
 
 
