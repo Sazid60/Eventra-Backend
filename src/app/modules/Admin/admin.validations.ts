@@ -8,6 +8,21 @@ const update = z.object({
 });
 
 
+export const EventStatusSchema = z.enum([
+  "PENDING",
+  "REJECTED",
+  "OPEN",
+  "FULL",
+  "COMPLETED",
+  "CANCELLED",
+]);
+
+export const UpdateEventStatusSchema = z.object({
+  status: EventStatusSchema, 
+});
+
+
 export const adminValidationSchemas = {
-    update
+    update,
+    UpdateEventStatusSchema
 }

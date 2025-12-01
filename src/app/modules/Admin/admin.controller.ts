@@ -1,7 +1,7 @@
 import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { AdminService } from './admin.service';
 import pick from '../../../shared/pick';
-import { adminFilterableFields, hostSearchableFields } from './admin.constant';
+import { adminFilterableFields, eventFilterableFields, hostFilterableFields, hostSearchableFields } from './admin.constant';
 
 import httpStatus from 'http-status';
 import { sendResponse } from '../../../shared/sendResponse';
@@ -12,24 +12,9 @@ import { catchAsync } from '../../../shared/catchAsync';
 
 
 
-const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
-    const { id } = req.params;
-
-    const result = await AdminService.updateIntoDB(id, req.body);
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message: "Admin data updated!",
-        data: result
-    })
-})
-
-
-
-
 // get all host applications
 const getAllHostApplications: RequestHandler = catchAsync(async (req: Request, res: Response) => {
-    const filters = pick(req.query, hostSearchableFields);
+    const filters = pick(req.query, hostFilterableFields);
     const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
     const result = await AdminService.getAllHostApplications(filters, options);
 
@@ -40,6 +25,21 @@ const getAllHostApplications: RequestHandler = catchAsync(async (req: Request, r
         data: result
     });
 });
+
+// get all event applications
+const getAllEventApplications: RequestHandler = catchAsync(async (req: Request, res: Response) => {
+    const filters = pick(req.query, eventFilterableFields);
+    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
+    const result = await AdminService.getAllEventApplications(filters, options);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "All Events applications fetched!",
+        data: result
+    });
+
+})
 
 //  approve host application 
 
@@ -70,9 +70,24 @@ const rejectHost = catchAsync(async (req: Request, res: Response) => {
     })
 });
 
-    export const AdminController = {
-        updateIntoDB,
-        getAllHostApplications,
-        approveHost,
-        rejectHost
-    }
+
+const approveEventIntoDB = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const result = await AdminService.approveEventIntoDB(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Event approved!",
+        data: result
+    })
+});
+
+
+export const AdminController = {
+    getAllEventApplications,
+    approveEventIntoDB,
+    getAllHostApplications,
+    approveHost,
+    rejectHost
+}

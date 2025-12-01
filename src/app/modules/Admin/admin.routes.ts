@@ -16,6 +16,14 @@ router.get(
     AdminController.getAllHostApplications
 );
 
+
+//get all event applications 
+router.get(
+    '/event-applications',
+    auth(UserRole.ADMIN),
+    AdminController.getAllEventApplications
+);
+
 // approve host application
 router.patch(
     '/host-applications/:id/approve',
@@ -31,13 +39,18 @@ router.patch(
 );
 
 
+// approve event
 
 router.patch(
-    '/:id',
+    '/event-application/:id/approve',
     auth(UserRole.ADMIN),
-    validateRequest(adminValidationSchemas.update),
-    AdminController.updateIntoDB
+    AdminController.approveEventIntoDB
 );
+
+
+// reject event 
+
+
 
 
 

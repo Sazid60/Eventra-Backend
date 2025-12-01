@@ -45,11 +45,7 @@ const createEvent = z.object({
 
     capacity: z.number({
         error: "Event capacity is required!",
-    }),
-
-    hostId: z.string({
-        error: "Host ID is required!",
-    }),
+    })
 });
 
 
