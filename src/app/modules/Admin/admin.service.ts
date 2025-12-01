@@ -1,6 +1,6 @@
 
 
-import { Admin, EventCategory, HostApplicationStatus, Prisma, UserRole, UserStatus } from "@prisma/client";
+import { Admin, EventCategory, EventStatus, HostApplicationStatus, Prisma, UserRole, UserStatus } from "@prisma/client";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 
 
@@ -60,7 +60,7 @@ const getAllHostApplications = async (params: any, options: IPaginationOptions) 
             limit,
             total
         },
-         hostRequests: result
+        hostRequests: result
     };
 }
 
@@ -82,13 +82,13 @@ const getAllEventApplications = async (params: any, options: IPaginationOptions)
         andConditions.push({ status: status as any });
     }
 
-if (category) {
-    andConditions.push({
-        category: {
-            has: category as EventCategory
-        }
-    });
-}
+    if (category) {
+        andConditions.push({
+            category: {
+                has: category as EventCategory
+            }
+        });
+    }
 
     if (date) {
         const parsed = new Date(String(date));
@@ -127,7 +127,7 @@ if (category) {
     };
 };
 
-// approve 
+// approve event
 
 
 // approve host application
@@ -263,15 +263,76 @@ const rejectHostApplication = async (id: string) => {
     return result;
 };
 
+// approve event into DB
 const approveEventIntoDB = async (id: string) => {
-    console.log("event approved")
+    console.log(id)
+    const isEventExist = await prisma.event.findUniqueOrThrow({
+        where: { id }
+    });
+
+    if (!isEventExist) {
+        throw new Error("Event not found!");
+    }
+
+    if (isEventExist.status !== 'PENDING') {
+        throw new Error("Only PENDING events can be approved.");
+    }
+    const result = await prisma.event.update({
+        where: { id },
+        include: { host: true },
+        data: { status: EventStatus.OPEN }
+    });
+
+    await sendEmail({
+        to: result.host.email,
+        subject: "Event Application Approval Update",
+        templateName: "event-application-approved",
+        templateData: {
+            name: result.host.name,
+        }
+    });
+
+    return result;
 };
 
+// reject event into db 
+const rejectEvent = async (id: string) => {
+    const isEventExist = await prisma.event.findUniqueOrThrow({
+        where: { id }
+    });
+
+    console.log(isEventExist)
+
+    if (!isEventExist) {
+        throw new Error("Event not found!");
+    }
+
+    if (isEventExist.status !== 'PENDING') {
+        throw new Error("Only PENDING events can be rejected.");
+    }
+
+    const result = await prisma.event.update({
+        where: { id },
+        include: { host: true },
+        data: { status: EventStatus.REJECTED }
+    });
+
+    await sendEmail({
+        to: result.host.email,
+        subject: "Event Application Rejected",
+        templateName: "event-application-rejected",
+        templateData: {
+            name: result.host.name,
+        }
+    });
+    return result;
+}
 
 export const AdminService = {
     getAllEventApplications,
     approveEventIntoDB,
     getAllHostApplications,
     approveHostApplication,
-    rejectHostApplication
+    rejectHostApplication,
+    rejectEvent
 }

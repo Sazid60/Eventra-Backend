@@ -41,6 +41,8 @@ const getAllEventApplications: RequestHandler = catchAsync(async (req: Request, 
 
 })
 
+
+
 //  approve host application 
 
 const approveHost = catchAsync(async (req: Request, res: Response) => {
@@ -83,11 +85,24 @@ const approveEventIntoDB = catchAsync(async (req: Request, res: Response) => {
     })
 });
 
+// reject event
+const rejectEvent = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const result = await AdminService.rejectEvent(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Event rejected!",
+        data: result
+    })
+})
 
 export const AdminController = {
     getAllEventApplications,
     approveEventIntoDB,
     getAllHostApplications,
     approveHost,
-    rejectHost
+    rejectHost,
+    rejectEvent
 }

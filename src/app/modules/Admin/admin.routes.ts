@@ -49,7 +49,11 @@ router.patch(
 
 
 // reject event 
-
+router.patch(
+    '/event-application/:id/reject',
+    auth(UserRole.ADMIN),
+    AdminController.rejectEvent
+);
 
 
 
