@@ -98,8 +98,6 @@ enum EventCategory {
   // Gaming & Online
   GAMING
   ESPORTS
-  BOARDGAME
-  CARDGAME
   ONLINE_EVENT
 
   // Travel & Exploration
@@ -113,35 +111,71 @@ enum EventCategory {
 
 
 enum Interest {
+  // Entertainment
   MUSIC
+  MOVIE
+  THEATER
+  COMEDY
+  PARTY
+  NIGHTLIFE
+  CONCERT
+  FESTIVAL
+
+  // Sports & Outdoors
   SPORTS
   HIKING
-  TRAVEL
-  COOKING
-  READING
-  DANCING
-  GAMING
-  TECHNOLOGY
-  PHOTOGRAPHY
-  ART
-  MOVIES
-  FITNESS
-  YOGA
   CYCLING
   RUNNING
+  FITNESS
   CAMPING
-  FISHING
-  LANGUAGES
-  FOOD
+  OUTDOOR
+  ADVENTURE
+
+  // Social & Community
+  SOCIAL
+  NETWORKING
+  MEETUP
+  COMMUNITY
   VOLUNTEERING
-  GARDENING
-  WRITING
-  FASHION
+  CULTURE
+  RELIGION
+
+  // Food & Dining
+  FOOD
+  DINNER
+  COOKING
+  TASTING
+  CAFE
+  RESTAURANT
+
+  // Education & Workshops
+  TECH
+  WORKSHOP
+  SEMINAR
+  CONFERENCE
+  EDUCATION
+  LANGUAGE
   BUSINESS
   FINANCE
-  MEDITATION
-  DIY
-  PETS
-  SOCIALIZING
+
+  // Hobbies & Creative
+  ART
+  CRAFT
+  PHOTOGRAPHY
+  PAINTING
+  WRITING
+  DANCE
+
+  // Gaming & Online
+  GAMING
+  ESPORTS
+  ONLINE_EVENT
+
+  // Travel & Exploration
+  TRAVEL
+  TOUR
+  ROADTRIP
+
+  // Default fallback
   OTHER
 }

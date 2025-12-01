@@ -13,10 +13,15 @@ const router = express.Router();
 // get my events 
 router.get(
     '/all-events',
-    auth(UserRole.HOST, UserRole.ADMIN, UserRole.CLIENT),
     eventController.getAllEvents
 );
 
+// get single event
+router.get(
+    '/:id',
+    auth(UserRole.HOST, UserRole.ADMIN, UserRole.CLIENT),
+    eventController.getSingleEvent
+);
 
 
 

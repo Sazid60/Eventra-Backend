@@ -11,7 +11,8 @@ import { eventService } from "./event.service";
 const getAllEvents = catchAsync(async (req: Request & { user?: any }, res: Response) => {
     const filters = pick(req.query, eventFilterableFields);
     const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
-    const result = await eventService.getAllEvents(filters, options);
+    const result = await eventService.getAllEvents(filters, options, req.user);
+
 
     sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -20,7 +21,20 @@ const getAllEvents = catchAsync(async (req: Request & { user?: any }, res: Respo
         data: result
     });
 });
+const getSingleEvent = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+
+const {id} = req.params;
+    const result = await eventService.getSingleEvent(id);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Single Event retrieved successfully",
+        data: result
+    });
+});
 
 export const eventController = {
-    getAllEvents
+    getAllEvents,
+    getSingleEvent
 };

@@ -23,6 +23,7 @@ model Admin {
   email         String   @unique
   profilePhoto  String
   contactNumber String
+  interests     Interest[] @default([OTHER])
   income        Float    @default(0)
   isDeleted     Boolean  @default(false)
   createdAt     DateTime @default(now())
@@ -61,6 +62,7 @@ model Host {
   profilePhoto  String
   contactNumber String
   bio           String
+  interests     Interest[]
   location      String
   isDeleted     Boolean  @default(false)
   createdAt     DateTime @default(now())

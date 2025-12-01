@@ -186,6 +186,7 @@ const approveHostApplication = async (id: string) => {
                 profilePhoto: existingClientInfo.profilePhoto,
                 contactNumber: existingClientInfo.contactNumber,
                 bio: existingClientInfo.bio,
+                interests : existingClientInfo.interests,
                 location: existingClientInfo.location
             }
         });
