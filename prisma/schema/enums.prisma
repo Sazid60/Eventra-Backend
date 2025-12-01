@@ -179,3 +179,9 @@ enum Interest {
   // Default fallback
   OTHER
 }
+
+enum ParticipantStatus {
+  CONFIRMED
+  LEFT
+  PENDING
+}

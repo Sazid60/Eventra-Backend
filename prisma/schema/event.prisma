@@ -22,9 +22,11 @@ model Event {
 
 model EventParticipant {
     id        String   @id @default(uuid())
+    transactionId String @unique
     eventId   String
     clientId  String
     createdAt DateTime @default(now())
+    participantStatus ParticipantStatus @default(PENDING)
 
     event  Event  @relation(fields: [eventId], references: [id])
     client Client @relation(fields: [clientId], references: [id])
