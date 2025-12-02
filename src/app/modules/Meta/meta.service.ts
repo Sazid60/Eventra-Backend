@@ -3,7 +3,7 @@ import { JwtPayload } from "jsonwebtoken";
 import prisma from "../../../shared/prisma";
 import { EventStatus, HostApplicationStatus, PaymentStatus, UserRole } from "@prisma/client";
 
-const fetchDashboardMetaData = async (user: any) => {
+const fetchDashboardMetaData = async (user: JwtPayload) => {
     const payload: any = user as any;
 
     if (!payload || !payload.role) {

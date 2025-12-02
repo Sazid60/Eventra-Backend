@@ -1,30 +1,27 @@
 import { Event, EventCategory, EventStatus, Prisma } from "@prisma/client";
-import { fileUploader } from "../../../helpers/fileUploader";
+
 import config from "../../../config";
 import prisma from "../../../shared/prisma";
 import { Request } from "express";
+import { Secret } from "jsonwebtoken";
 import { jwtHelper } from "../../../helpers/jwtHelper";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import { eventSearchableFields } from "../Admin/admin.constant";
+import { deleteImageFromCloudinary } from "../../../config/cloudinary.config";
 
 const createEvent = async (req: Request): Promise<Event> => {
-    const file = req.file;
+    let imageUrl = "";
+
+    imageUrl = req.file?.path || "";
 
     const accessToken = req.cookies["accessToken"]
     console.log(accessToken)
 
     const decodedData = jwtHelper.verifyToken(
         accessToken,
-        config.jwt.jwt_secret
+        config.jwt.jwt_secret as Secret
     );
-
-    let uploadedPublicId: string | undefined;
-    if (file) {
-        const uploadedProfileImage = await fileUploader.uploadToCloudinary(file);
-        req.body.image = uploadedProfileImage?.secure_url;
-        uploadedPublicId = (uploadedProfileImage as any)?.public_id;
-    }
 
     const userData = await prisma.user.findUniqueOrThrow({
         where: {
@@ -45,6 +42,7 @@ const createEvent = async (req: Request): Promise<Event> => {
             const createdEventData = await transactionClient.event.create({
                 data: {
                     ...req.body,
+                    image: imageUrl,
                     hostId: userData.host?.id,
                 }
             });
@@ -56,9 +54,7 @@ const createEvent = async (req: Request): Promise<Event> => {
 
 
     } catch (error) {
-        if (uploadedPublicId) {
-            await fileUploader.deleteFromCloudinary(uploadedPublicId as string);
-        }
+        if (imageUrl) await deleteImageFromCloudinary(imageUrl);
         throw error;
     }
 };
@@ -85,6 +81,7 @@ const deleteEvent = async (id: string): Promise<Event> => {
     return result;
 }
 const updateEvent = async (id: string, req: Request): Promise<Event> => {
+    let newImageUrl = "";
     const existingEvent = await prisma.event.findUnique({
         where: { id }
     });
@@ -99,6 +96,11 @@ const updateEvent = async (id: string, req: Request): Promise<Event> => {
         existingEvent.status === EventStatus.COMPLETED
     ) {
         throw new Error("Only Pending, Open or Full events can be updated.");
+    }
+
+    if (req.file) {
+        newImageUrl = req.file.path;
+        req.body.image = newImageUrl;
     }
 
     const updateData: any = { ...req.body };
@@ -119,23 +121,19 @@ const updateEvent = async (id: string, req: Request): Promise<Event> => {
     }
 
 
-    const file = req.file;
-    let uploadedPublicId: string | undefined;
-    if (file) {
-        const uploadedProfileImage = await fileUploader.uploadToCloudinary(file);
-        req.body.image = uploadedProfileImage?.secure_url;
-        uploadedPublicId = (uploadedProfileImage as any)?.public_id;
-    }
 
     try {
+        if (newImageUrl) {
+            await deleteImageFromCloudinary(existingEvent?.image);
+        }
+
         return await prisma.event.update({
             where: { id },
             data: updateData
         });
     } catch (error) {
-        if (uploadedPublicId) {
-            await fileUploader.deleteFromCloudinary(uploadedPublicId);
-        }
+        if (newImageUrl) await deleteImageFromCloudinary(newImageUrl);
+
         throw error;
     }
 };
@@ -174,7 +172,7 @@ const getMyEvents = async (user: any, params: any, options: IPaginationOptions) 
 
     const decodedData = jwtHelper.verifyToken(
         accessToken,
-        config.jwt.jwt_secret
+        config.jwt.jwt_secret as Secret
     );
 
     const userInfo = await prisma.user.findUniqueOrThrow({
