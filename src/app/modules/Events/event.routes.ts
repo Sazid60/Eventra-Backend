@@ -16,6 +16,14 @@ router.get(
     eventController.getAllEvents
 );
 
+
+// get my events 
+router.get(
+    '/my-events',
+    auth(UserRole.CLIENT),
+    eventController.getMyEvents
+);
+
 // get single event
 router.get(
     '/:id',
@@ -36,6 +44,7 @@ router.post(
     auth(UserRole.CLIENT),
     eventController.leaveEvent
 );
+
 
 
 
