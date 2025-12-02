@@ -15,7 +15,7 @@
     "db:push": "prisma db push --schema=./prisma/schema",
     "db:pull": "prisma db pull --schema=./prisma/schema",
     "db:studio": "prisma studio --schema=./prisma/schema",
-    "postinstall": "prisma generate --schema=./prisma/schema & tsc"
+    "postinstall": "prisma generate --schema=./prisma/schema & tsc & cpx \"src/helpers/templates/**/*\" dist/helpers/templates"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +30,7 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^24.10.1",
     "@types/nodemailer": "^6.4.21",
+    "cpx": "^1.5.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.20.6",
