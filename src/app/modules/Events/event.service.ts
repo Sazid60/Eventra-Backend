@@ -1,15 +1,20 @@
-import { Event, EventCategory, EventStatus, Prisma } from "@prisma/client";
+import { Event, EventCategory, EventStatus, ParticipantStatus, PaymentStatus, Prisma } from "@prisma/client";
 import config from "../../../config";
 import prisma from "../../../shared/prisma";
 
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import { eventSearchableFields } from "../Admin/admin.constant";
+import { ISSLCommerz } from "../sslCommerz/sslCommerz.interface";
+import { SSLService } from "../sslCommerz/sslCommerz.service";
 
 
+const getTransactionId = () => {
+    return `tran_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+}
 
 // get my events
-const getAllEvents = async (params: any, options: IPaginationOptions, user?: any) => {
+const getAllEvents = async (params: any, options: IPaginationOptions, user: any) => {
     const { page, limit, skip } = paginationHelper.calculatePagination(options);
     const { searchTerm, category, date, status, ...filterData } = params;
 
@@ -68,22 +73,26 @@ const getAllEvents = async (params: any, options: IPaginationOptions, user?: any
         orderBy:
             options.sortBy && options.sortOrder
                 ? { [options.sortBy]: options.sortOrder }
-                : { createdAt: "asc" },
+                : { createdAt: "desc" },
         include: { host: true }
     });
 
     const total = await prisma.event.count({ where: whereConditions });
 
-    /** ------------------------------
-     * APPLY MIND-LIKE LOGIC HERE
-     * ----------------------------- */
+    console.log("total  :", total)
+
+    console.log(user)
+
 
     if (user && user.role !== "ADMIN") {
-        // Get user interests (client or host)
         const client = await prisma.client.findUnique({
             where: { email: user.email },
             select: { interests: true }
         });
+
+        console.log(client)
+
+        console.log("client interests :", client?.interests);
 
         const host = await prisma.host.findUnique({
             where: { email: user.email },
@@ -96,17 +105,18 @@ const getAllEvents = async (params: any, options: IPaginationOptions, user?: any
             const mindLikeEvents = [];
             const otherEvents = [];
 
-            // Split events into 2 groups
             for (const ev of events) {
                 const match = ev.category.some(c =>
                     userInterests.includes(c as any)
                 );
 
+                console.log("match :", match);
+                console.log("user Interest :", userInterests);
+
                 if (match) mindLikeEvents.push(ev);
                 else otherEvents.push(ev);
             }
 
-            // Reorder: mind-like first, then others
             const orderedEvents = [...mindLikeEvents, ...otherEvents];
 
             return {
@@ -115,8 +125,6 @@ const getAllEvents = async (params: any, options: IPaginationOptions, user?: any
             };
         }
     }
-
-    // If admin or not logged in → return normal
     return {
         meta: { page, limit, total },
         eventRequests: events
@@ -124,7 +132,7 @@ const getAllEvents = async (params: any, options: IPaginationOptions, user?: any
 };
 
 
-// 
+// get single event
 const getSingleEvent = async (id: string) => {
 
     // fetch event + host + participants (client details)
@@ -169,8 +177,205 @@ const getSingleEvent = async (id: string) => {
     };
 };
 
+// join event 
 
+export const joinEvent = async (eventId: string, user: any) => {
+    const client = await prisma.client.findUnique({
+        where: { email: user.email },
+        include: { user: true },
+    });
+
+    if (!client) throw new Error("Client not found");
+    if (client.isDeleted) throw new Error("Client account is deleted");
+    if (client.user.status !== "ACTIVE") throw new Error("Client account is not active");
+
+    const event = await prisma.event.findUnique({
+        where: { id: eventId },
+        include: { host: true },
+    });
+
+    if (!event) throw new Error("Event not found");
+    if (event.status !== EventStatus.OPEN) throw new Error("Event is not open");
+    if (event.date < new Date()) throw new Error("Event date has passed");
+
+    const existing = await prisma.eventParticipant.findFirst({
+        where: {
+            eventId,
+            clientId: client.id,
+            participantStatus: { not: ParticipantStatus.LEFT },
+        },
+    });
+
+    if (existing) throw new Error("You have already joined this event");
+
+    const transactionId = getTransactionId();
+
+    const result = await prisma.$transaction(async (tx) => {
+        // Reload event to ensure latest capacity
+        const eventForUpdate = await tx.event.findUnique({
+            where: { id: eventId },
+        });
+
+        if (!eventForUpdate) throw new Error("Event not found");
+
+        if (eventForUpdate.capacity < 1) {
+            throw new Error("No seats available");
+        }
+
+        // Create participant
+        const newParticipant = await tx.eventParticipant.create({
+            data: {
+                eventId,
+                clientId: client.id,
+                participantStatus: ParticipantStatus.PENDING,
+                transactionId,
+            },
+        });
+
+        // Create payment
+        const payment = await tx.payment.create({
+            data: {
+                transactionId,
+                amount: eventForUpdate.joiningFee,
+                participantId: newParticipant.id,
+                eventId,
+                clientId: client.id,
+                hostId: eventForUpdate.hostId,
+                paymentStatus: PaymentStatus.PENDING,
+            },
+        });
+        // Reserve seat: decrement capacity and set status to FULL when capacity reaches 0.
+        const newCapacity = eventForUpdate.capacity - 1;
+        if (newCapacity < 0) {
+            throw new Error('No seats available');
+        }
+
+        const eventUpdateData: any = { capacity: newCapacity };
+        if (newCapacity === 0) {
+            eventUpdateData.status = EventStatus.FULL;
+        }
+
+        const updatedEvent = await tx.event.update({ where: { id: eventId }, data: eventUpdateData });
+
+        const sslPayload: ISSLCommerz = {
+            address: client.location,
+            email: client.email,
+            phoneNumber: client.contactNumber,
+            name: client.name,
+            amount: eventForUpdate.joiningFee,
+            transactionId: transactionId
+        }
+
+        const sslPayment = await SSLService.sslPaymentInit(sslPayload)
+
+        return {
+            paymentUrl: sslPayment.GatewayPageURL,
+            newParticipant,
+            payment,
+            updatedEvent
+        };
+    });
+
+    return result;
+};
+
+// leave event
+export const leaveEvent = async (eventId: string, user: any) => {
+    const client = await prisma.client.findUnique({
+        where: { email: user.email },
+        include: { user: true },
+    });
+
+    if (!client) throw new Error("Client not found");
+    if (client.isDeleted) throw new Error("Client account is deleted");
+    if (client.user.status !== "ACTIVE") throw new Error("Client account is not active");
+    // find in event participation
+    const participation = await prisma.eventParticipant.findFirst({
+        where: {
+            eventId,
+            clientId: client.id,
+            participantStatus: { not: ParticipantStatus.LEFT },
+        },
+        include: {
+            event: true,
+            client: true
+        },
+    });
+    if (!participation) throw new Error("You have not joined this event or already left");
+    if (participation.event.date < new Date()) throw new Error("Event date has passed, you cannot leave now");
+    // update participant status to LEFT
+    // increase the seat capacity
+    const result = await prisma.$transaction(async (tx) => {
+        // mark participant as LEFT
+        const updatedParticipation = await tx.eventParticipant.update({
+            where: { id: participation.id },
+            data: { participantStatus: ParticipantStatus.LEFT },
+        });
+
+        // reload event inside transaction to avoid race conditions
+        const eventCurrent = await tx.event.findUnique({
+            where: { id: participation.eventId },
+            select: { capacity: true, status: true }
+        });
+
+        if (!eventCurrent) throw new Error('Event not found');
+
+        // release reserved seat
+        const eventUpdateData: any = { capacity: eventCurrent.capacity + 1 };
+
+        // only change status to OPEN if it was FULL before releasing
+        if (eventCurrent.status === EventStatus.FULL) {
+            eventUpdateData.status = EventStatus.OPEN;
+        }
+
+        const updatedEvent = await tx.event.update({
+            where: { id: participation.eventId },
+            data: eventUpdateData,
+        });
+
+        return { updatedParticipation, updatedEvent };
+    });
+    return result;
+}
+// mark event as COMPLETED (only allowed when status is OPEN or FULL and event date/time has passed)
+export const completeEvent = async (eventId: string, user: any) => {
+
+    const event = await prisma.event.findUnique({ where: { id: eventId }, include: { host: true } });
+    if (!event) throw new Error('Event not found');
+
+    // Only allow completion when status is OPEN or FULL
+    if (!(event.status === EventStatus.OPEN || event.status === EventStatus.FULL)) {
+        throw new Error('Event cannot be marked completed unless it is OPEN or FULL');
+    }
+
+    const now = new Date();
+    // Do not allow marking completed before the event date/time
+    if (now.getTime() < new Date(event.date).getTime()) {
+        throw new Error('Event date/time has not occurred yet');
+    }
+
+    // Permission: allow ADMIN or the host who owns the event
+    if (user && user.role !== 'ADMIN') {
+        if (user.role === 'HOST') {
+            // verify host identity by email
+            const host = await prisma.host.findUnique({ where: { email: user.email } });
+            if (!host || host.id !== event.hostId) {
+                throw new Error('You are not authorized to complete this event');
+            }
+        } else {
+            throw new Error('You are not authorized to complete this event');
+        }
+    }
+
+    const updated = await prisma.event.update({ where: { id: eventId }, data: { status: EventStatus.COMPLETED } });
+    
+    return updated;
+}
 export const eventService = {
     getAllEvents,
-    getSingleEvent
+    getSingleEvent,
+    joinEvent,
+    leaveEvent
+    ,
+    completeEvent
 };

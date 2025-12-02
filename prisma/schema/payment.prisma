@@ -1,12 +1,16 @@
-
 model Payment {
-    id String @id @default(uuid())
-    amount        Float
-    paymentStatus PaymentStatus @default(PENDING)
+    id                 String        @id @default(uuid())
+    transactionId      String        @unique
+    paymentGatewayData Json? 
+    // 
+    amount             Float
+    paymentStatus      PaymentStatus @default(PENDING)
+    invoiceUrl         String? // coming from ssl
 
     eventId  String
     clientId String
     hostId   String
+    participantId String
 
     createdAt DateTime @default(now())
 

@@ -27,6 +27,16 @@ const deleteEvent = catchAsync(async (req: Request, res: Response) => {
         data: result
     })
 });
+const completeEvent = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await hostService.completeEvent(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Event Completed successfully!",
+        data: result
+    })
+});
 const updateEvent = catchAsync(async (req: Request, res: Response) => {
     const { id } = req.params;
     console.log(req.body)
@@ -56,7 +66,7 @@ const getMyEvents = catchAsync(async (req: Request & { user?: any }, res: Respon
     const user = req.cookies;
     const filters = pick(req.query, eventFilterableFields);
     const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
-    const result = await hostService.getMyEvents(user,filters, options);
+    const result = await hostService.getMyEvents(user, filters, options);
 
     sendResponse(res, {
         statusCode: httpStatus.OK,
@@ -71,5 +81,6 @@ export const hostController = {
     deleteEvent,
     updateEvent,
     cancelEvent,
-    getMyEvents
+    getMyEvents,
+    completeEvent
 };

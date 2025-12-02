@@ -182,12 +182,12 @@ const getMyEvents = async (user: any, params: any, options: IPaginationOptions) 
         where: {
             id: decodedData.userId
         },
-        include:{
+        include: {
             host: true
         }
     });
 
-    if(!userInfo.host){
+    if (!userInfo.host) {
         throw new Error("Host information not found for the user.");
     }
 
@@ -251,11 +251,44 @@ const getMyEvents = async (user: any, params: any, options: IPaginationOptions) 
     };
 };
 
+// complete event 
 
+const completeEvent = async (id: string) => {
+    const isEventExist = await prisma.event.findUnique({
+        where: { id },
+        include: { host: true }
+    });
+
+    if (!isEventExist) {
+        throw new Error('Event not found');
+    }
+
+    // Only allow completion when status is OPEN or FULL
+    if (!(isEventExist.status === EventStatus.OPEN || isEventExist.status === EventStatus.FULL)) {
+        throw new Error('Only events with status OPEN or FULL can be marked completed');
+    }
+
+    // Ensure current time is same or after event date/time
+    const now = new Date();
+    const eventDate = new Date(isEventExist.date);
+    if (now.getTime() < eventDate.getTime()) {
+        throw new Error('Event date/time has not occurred yet');
+    }
+
+    // mark as COMPLETED
+    const updated = await prisma.event.update({
+        where: { id },
+        include: { host: true },
+        data: { status: EventStatus.COMPLETED }
+    });
+
+    return updated;
+}
 export const hostService = {
     createEvent,
     deleteEvent,
     updateEvent,
     cancelEvent,
-    getMyEvents
+    getMyEvents,
+    completeEvent
 };

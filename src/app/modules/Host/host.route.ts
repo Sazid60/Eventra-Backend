@@ -40,6 +40,12 @@ router.patch(
     }
 );
 
+// mark the event completed 
+router.patch(
+    '/event-complete/:id',
+    auth(UserRole.HOST),
+    hostController.completeEvent
+);
 
 router.delete(
     '/event/:id',

@@ -23,6 +23,20 @@ router.get(
     eventController.getSingleEvent
 );
 
+// join event 
+router.post(
+    '/join/:id',
+    auth(UserRole.CLIENT),
+    eventController.joinEvent
+);
+
+// leave events 
+router.post(
+    '/leave/:id',
+    auth(UserRole.CLIENT),
+    eventController.leaveEvent
+);
+
 
 
 export const EventRoutes = router;
