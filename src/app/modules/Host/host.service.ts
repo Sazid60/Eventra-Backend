@@ -3,7 +3,6 @@ import { fileUploader } from "../../../helpers/fileUploader";
 import config from "../../../config";
 import prisma from "../../../shared/prisma";
 import { Request } from "express";
-import { Secret } from "jsonwebtoken";
 import { jwtHelper } from "../../../helpers/jwtHelper";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { paginationHelper } from "../../../helpers/paginationHelper";
