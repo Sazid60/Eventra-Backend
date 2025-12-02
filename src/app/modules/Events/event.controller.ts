@@ -59,8 +59,23 @@ const joinEvent = catchAsync(async (req: Request & { user?: any }, res: Response
     });
 });
 
+// leave event
+const leaveEvent = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const { id } = req.params;
+    const user = req.user;
+
+    const result = await eventService.leaveEvent(id, user);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "You have left the Event successfully",
+        data: result
+    });
+});
+
 export const eventController = {
     getAllEvents,
     getSingleEvent,
-    joinEvent
+    joinEvent,
+    leaveEvent
 };

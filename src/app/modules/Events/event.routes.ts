@@ -31,11 +31,11 @@ router.post(
 );
 
 // leave events 
-// router.post(
-//     '/leave/:id',
-//     auth(UserRole.CLIENT),
-//     eventController.leaveEvent
-// );
+router.post(
+    '/leave/:id',
+    auth(UserRole.CLIENT),
+    eventController.leaveEvent
+);
 
 
 

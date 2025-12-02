@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f4f6f9;
+        margin: 0;
+        padding: 0;
+        color: #333;
+      }
+      .container {
+        max-width: 700px;
+        margin: 0 auto;
+        background: white;
+        padding: 25px 30px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        border-radius: 6px;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .brand {
+        font-size: 24px;
+        font-weight: 700;
+        color: #2b6cb0;
+      }
+      .meta {
+        text-align: right;
+        font-size: 12px;
+        color: #666;
+      }
+      .section-title {
+        margin-top: 25px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #2b6cb0;
+      }
+      .section {
+        margin-top: 10px;
+        line-height: 1.6;
+      }
+      table {
+        width: 100%;
+        margin-top: 15px;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th, td {
+        padding: 10px;
+        border: 1px solid #e6e6e6;
+      }
+      th {
+        background: #f7f7f7;
+        text-align: left;
+      }
+      .total {
+        font-weight: 700;
+        text-align: right;
+      }
+      .btn {
+        display: inline-block;
+        padding: 12px 18px;
+        margin-top: 15px;
+        background: #2b6cb0;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      .footer {
+        margin-top: 25px;
+        font-size: 12px;
+        color: #777;
+        text-align: center;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      
+      <div class="header">
+        <div class="brand">Eventra</div>
+        <!-- <div class="meta">
+          <div>Invoice #: <strong><%= invoiceNumber %></strong></div>
+          <div>Date: <%= invoiceDate %></div>
+        </div> -->
+      </div>
+
+      <div class="section-title">Billing Information</div>
+      <div class="section">
+        Dear <strong><%= client.name %></strong>, thank you for choosing Eventra.  
+        Below is a summary of your booking details:
+        <br />
+        <strong>Client:</strong> <%= client.name %> &lt;<%= client.email %>&gt;  
+        <br />
+        <small>Contact: <%= client.contactNumber || 'N/A' %></small>
+      </div>
+
+      <div class="section-title">Event Details</div>
+      <div class="section">
+        You are successfully registered for:
+        <br />
+        <strong><%= event.title %></strong>  
+        <br />
+        Scheduled on <%= event.dateReadable %> at <%= event.location %>.
+      </div>
+
+      <div class="section-title">Invoice Summary</div>
+      <div class="section">
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th style="width: 140px">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Joining fee for <%= event.title %></td>
+              <td>৳ <%= amount.toFixed(2) %></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="total">Total Payable</td>
+              <td>৳ <%= amount.toFixed(2) %></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="section">
+        <% if (invoiceUrl) { %>
+        <a class="btn" href="<%= invoiceUrl %>" target="_blank">View / Download Full Invoice</a>
+        <% } %>
+      </div>
+
+      <div class="section" style="font-size: 13px; color:#555;">
+        <strong>Transaction Information</strong>
+        <br />
+        Transaction ID: <%= transactionId %>
+        <br />
+        Billed by: <%= host?.name || '' %> &lt;<%= host?.email || '' %>&gt;
+      </div>
+
+      <div class="footer">
+        We appreciate your trust in Eventra.  
+        If you have any questions, feel free to contact us.  
+        <br /><br />
+        Wishing you an amazing experience at your event!
+      </div>
+
+    </div>
+  </body>
+</html>

@@ -30,13 +30,20 @@
 
 import prisma from "../../../shared/prisma";
 import { PaymentStatus, ParticipantStatus, EventStatus } from "@prisma/client";
+import { sendEmail } from "../../../helpers/sendEmail";
 
 // Handle successful payment callback
 const successPayment = async (query: Record<string, string>) => {
     const transactionId = query.transactionId
     if (!transactionId) throw new Error("transactionId is required");
 
-    const payment = await prisma.payment.findUnique({ where: { transactionId } });
+    const payment = await prisma.payment.findUnique({
+        where: { transactionId },
+        include: {
+            event: { select: { id: true, title: true, date: true, location: true, joiningFee: true, host: { select: { name: true, email: true } } } },
+            client: { select: { id: true, name: true, email: true, contactNumber: true } }
+        }
+    });
     if (!payment) throw new Error("Payment not found");
 
     // Idempotency: if already processed as PAID, return immediately
@@ -75,10 +82,47 @@ const successPayment = async (query: Record<string, string>) => {
             await tx.admin.update({ where: { id: admin.id }, data: { income: { increment: adminShare } as any } });
         }
 
-        // NOTE: capacity was reserved at join time. No capacity change here.
+        //    send email will be done after transaction completes (below)
 
         return { success: true, payment: updatedPayment, participant: updatedParticipant };
     });
+
+    // After successful DB transaction, render invoice and send email (outside transaction)
+    try {
+        const updatedPayment = (result as any).payment;
+        const client = (payment as any).client;
+        const event = (payment as any).event;
+        const host = event?.host;
+
+        if (client && client.email) {
+            const invoiceDate = updatedPayment?.createdAt ? new Date(updatedPayment.createdAt).toLocaleString() : new Date().toLocaleString();
+
+            const templateData = {
+                invoiceNumber: updatedPayment?.transactionId || transactionId,
+                invoiceDate,
+                transactionId: updatedPayment?.transactionId || transactionId,
+                amount: updatedPayment?.amount || (payment as any).amount || 0,
+                invoiceUrl: updatedPayment?.invoiceUrl || (payment as any).invoiceUrl || null,
+                client: { name: client.name || '', email: client.email || '', contactNumber: client.contactNumber || '' },
+                event: { title: event?.title || '', dateReadable: event?.date ? new Date(event.date).toLocaleString() : '', location: event?.location || '' },
+                host: { name: host?.name || '', email: host?.email || '' },
+            };
+
+            // fire-and-forget: log errors but don't fail the payment flow
+            try {
+                await sendEmail({
+                    to: client.email,
+                    subject: `Your Invoice for ${templateData.event.title || 'Event'}`,
+                    templateName: 'invoice-payment',
+                    templateData,
+                });
+            } catch (err: any) {
+                console.log('Failed to send invoice email:', err?.message || err);
+            }
+        }
+    } catch (err: any) {
+        console.log('Invoice email creation error', err?.message || err);
+    }
 
     return result;
 };

@@ -279,8 +279,67 @@ export const joinEvent = async (eventId: string, user: any) => {
     return result;
 };
 
+// leave event
+export const leaveEvent = async (eventId: string, user: any) => {
+    const client = await prisma.client.findUnique({
+        where: { email: user.email },
+        include: { user: true },
+    });
+
+    if (!client) throw new Error("Client not found");
+    if (client.isDeleted) throw new Error("Client account is deleted");
+    if (client.user.status !== "ACTIVE") throw new Error("Client account is not active");
+    // find in event participation
+    const participation = await prisma.eventParticipant.findFirst({
+        where: {
+            eventId,
+            clientId: client.id,
+            participantStatus: { not: ParticipantStatus.LEFT },
+        },
+        include: {
+            event: true,
+            client: true
+        },
+    });
+    if (!participation) throw new Error("You have not joined this event or already left");
+    if (participation.event.date < new Date()) throw new Error("Event date has passed, you cannot leave now");
+    // update participant status to LEFT
+    // increase the seat capacity
+    const result = await prisma.$transaction(async (tx) => {
+        // mark participant as LEFT
+        const updatedParticipation = await tx.eventParticipant.update({
+            where: { id: participation.id },
+            data: { participantStatus: ParticipantStatus.LEFT },
+        });
+
+        // reload event inside transaction to avoid race conditions
+        const eventCurrent = await tx.event.findUnique({
+            where: { id: participation.eventId },
+            select: { capacity: true, status: true }
+        });
+
+        if (!eventCurrent) throw new Error('Event not found');
+
+        // release reserved seat
+        const eventUpdateData: any = { capacity: eventCurrent.capacity + 1 };
+
+        // only change status to OPEN if it was FULL before releasing
+        if (eventCurrent.status === EventStatus.FULL) {
+            eventUpdateData.status = EventStatus.OPEN;
+        }
+
+        const updatedEvent = await tx.event.update({
+            where: { id: participation.eventId },
+            data: eventUpdateData,
+        });
+
+        return { updatedParticipation, updatedEvent };
+    });
+    return result;
+}
 export const eventService = {
     getAllEvents,
     getSingleEvent,
-    joinEvent
+    joinEvent,
+    leaveEvent
 };
