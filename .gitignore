@@ -9,3 +9,4 @@ dist/
 uploads/*
 !uploads/.gitkeep
 *.log
+.vercel
