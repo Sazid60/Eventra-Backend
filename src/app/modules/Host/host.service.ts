@@ -17,7 +17,7 @@ const createEvent = async (req: Request): Promise<Event> => {
 
     const decodedData = jwtHelper.verifyToken(
         accessToken,
-        config.jwt.jwt_secret as Secret
+        config.jwt.jwt_secret
     );
 
     let uploadedPublicId: string | undefined;
@@ -175,7 +175,7 @@ const getMyEvents = async (user: any, params: any, options: IPaginationOptions) 
 
     const decodedData = jwtHelper.verifyToken(
         accessToken,
-        config.jwt.jwt_secret as Secret
+        config.jwt.jwt_secret
     );
 
     const userInfo = await prisma.user.findUniqueOrThrow({

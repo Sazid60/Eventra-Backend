@@ -37,7 +37,7 @@ export const createNewAccessTokenWithRefreshToken = async (refreshToken: string)
     const verifiedRefreshToken = jwtHelper.verifyToken(
         refreshToken,
         config.jwt.refresh_token_secret as string
-    ) as JwtPayload;
+    )
 
     if (!verifiedRefreshToken || !verifiedRefreshToken.email) {
         throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid refresh token");

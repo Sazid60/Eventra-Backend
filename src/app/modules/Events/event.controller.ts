@@ -19,7 +19,7 @@ const getAllEvents = catchAsync(async (req: Request & { user?: any }, res: Respo
 
     const user = jwtHelper.verifyToken(
         accessToken,
-        config.jwt.jwt_secret as Secret
+        config.jwt.jwt_secret
     );
 
     console.log(user)
@@ -100,7 +100,7 @@ const getMyEvents = catchAsync(async (req: Request & { user?: any }, res: Respon
 
     const user = jwtHelper.verifyToken(
         accessToken,
-        config.jwt.jwt_secret as Secret
+        config.jwt.jwt_secret
     );
 
     const result = await eventService.getMyEvents(user, filters, options);
