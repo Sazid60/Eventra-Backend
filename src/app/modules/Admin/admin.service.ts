@@ -5,7 +5,7 @@ import { paginationHelper } from "../../../helpers/paginationHelper";
 
 
 import { IPaginationOptions } from "../../interfaces/pagination";
-import { adminSearchAbleFields, eventSearchableFields } from "./admin.constant";
+import { adminSearchAbleFields, eventSearchableFields, clientSearchableFields, hostProfileSearchableFields } from "./admin.constant";
 import prisma from "../../../shared/prisma";
 import { sendEmail } from "../../../helpers/sendEmail";
 
@@ -63,6 +63,158 @@ const getAllHostApplications = async (params: any, options: IPaginationOptions) 
         hostRequests: result
     };
 }
+
+const getAllClients = async (params: any, options: IPaginationOptions) => {
+    const { page, limit, skip } = paginationHelper.calculatePagination(options);
+    const { searchTerm, status, ...filterData } = params;
+
+    const andConditions: Prisma.UserWhereInput[] = [];
+
+    // must be CLIENT
+    andConditions.push({ role: UserRole.CLIENT });
+
+    // ensure only users who actually have a client profile
+    andConditions.push({
+        client: { isNot: null }
+    });
+
+    // globally searchable fields (User.email + Client.name + Client.contactNumber)
+    if (searchTerm) {
+        andConditions.push({
+            OR: [
+                { email: { contains: searchTerm, mode: 'insensitive' } },
+                { client: { name: { contains: searchTerm, mode: 'insensitive' } } }
+            ]
+        });
+    }
+
+    // status filter applies to User.status
+    if (status) {
+        andConditions.push({ status: status as UserStatus });
+    }
+
+    // dynamic filtering for other fields
+    if (Object.keys(filterData).length > 0) {
+        const extraFilters: Prisma.UserWhereInput[] = [];
+
+        for (const key of Object.keys(filterData)) {
+            const value = (filterData as any)[key];
+
+            if (clientSearchableFields.includes(key)) {
+                // apply filter on nested client field
+                extraFilters.push({
+                    client: { [key]: { equals: value } }
+                });
+            } else {
+                // filter on user field
+                extraFilters.push({
+                    [key]: { equals: value }
+                });
+            }
+        }
+
+        if (extraFilters.length) {
+            andConditions.push({ AND: extraFilters });
+        }
+    }
+
+    const whereConditions: Prisma.UserWhereInput = andConditions.length > 0 ? { AND: andConditions as any } : {};
+
+
+    const clients = await prisma.user.findMany({
+        where: whereConditions,
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder ? { [options.sortBy]: options.sortOrder } : { createdAt: 'desc' },
+        include: {
+            client: true, 
+        }
+    });
+
+    const total = await prisma.user.count({ where: whereConditions });
+
+    return {
+        meta: { page, limit, total },
+        clients
+    };
+};
+
+
+const getAllHosts = async (params: any, options: IPaginationOptions) => {
+    const { page, limit, skip } = paginationHelper.calculatePagination(options);
+    const { searchTerm, status, ...filterData } = params;
+
+    const andConditions: Prisma.UserWhereInput[] = [];
+
+    // must be HOST
+    andConditions.push({ role: UserRole.HOST });
+
+    // ensure only users who actually have a host profile
+    andConditions.push({
+        host: { isNot: null }
+    });
+
+    // globally searchable fields (User.email + Client.name + Client.contactNumber)
+    if (searchTerm) {
+        andConditions.push({
+            OR: [
+                { email: { contains: searchTerm, mode: 'insensitive' } },
+                { host: { name: { contains: searchTerm, mode: 'insensitive' } } },
+            ]
+        });
+    }
+
+    // status filter applies to User.status
+    if (status) {
+        andConditions.push({ status: status as UserStatus });
+    }
+
+    // dynamic filtering for other fields
+    if (Object.keys(filterData).length > 0) {
+        const extraFilters: Prisma.UserWhereInput[] = [];
+
+        for (const key of Object.keys(filterData)) {
+            const value = (filterData as any)[key];
+
+            if (hostProfileSearchableFields.includes(key)) {
+                // apply filter on nested client field
+                extraFilters.push({
+                    host: { [key]: { equals: value } }
+                });
+            } else {
+                // filter on user field
+                extraFilters.push({
+                    [key]: { equals: value }
+                });
+            }
+        }
+
+        if (extraFilters.length) {
+            andConditions.push({ AND: extraFilters });
+        }
+    }
+
+    const whereConditions: Prisma.UserWhereInput = andConditions.length > 0 ? { AND: andConditions as any } : {};
+
+
+    const clients = await prisma.user.findMany({
+        where: whereConditions,
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder ? { [options.sortBy]: options.sortOrder } : { createdAt: 'desc' },
+        include: {
+            host: true, 
+        }
+    });
+
+    const total = await prisma.user.count({ where: whereConditions });
+
+    return {
+        meta: { page, limit, total },
+        clients
+    };
+};
+
 
 const getAllEventApplications = async (params: any, options: IPaginationOptions) => {
     const { page, limit, skip } = paginationHelper.calculatePagination(options);
@@ -186,7 +338,7 @@ const approveHostApplication = async (id: string) => {
                 profilePhoto: existingClientInfo.profilePhoto,
                 contactNumber: existingClientInfo.contactNumber,
                 bio: existingClientInfo.bio,
-                interests : existingClientInfo.interests,
+                interests: existingClientInfo.interests,
                 location: existingClientInfo.location
             }
         });
@@ -335,5 +487,7 @@ export const AdminService = {
     getAllHostApplications,
     approveHostApplication,
     rejectHostApplication,
-    rejectEvent
+    rejectEvent,
+    getAllClients,
+    getAllHosts
 }

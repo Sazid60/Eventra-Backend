@@ -16,11 +16,26 @@ router.get(
     eventController.getAllEvents
 );
 
+
+// get my events 
+router.get(
+    '/my-events',
+    auth(UserRole.CLIENT),
+    eventController.getMyEvents
+);
+
 // get single event
 router.get(
     '/:id',
     auth(UserRole.HOST, UserRole.ADMIN, UserRole.CLIENT),
     eventController.getSingleEvent
+);
+
+// get participants list 
+router.get(
+    '/participants/:id',
+    auth(UserRole.CLIENT,UserRole.HOST, UserRole.ADMIN),
+    eventController.getEventsParticipants
 );
 
 // join event 
@@ -36,6 +51,7 @@ router.post(
     auth(UserRole.CLIENT),
     eventController.leaveEvent
 );
+
 
 
 

@@ -7,6 +7,7 @@ import { paginationHelper } from "../../../helpers/paginationHelper";
 import { eventSearchableFields } from "../Admin/admin.constant";
 import { ISSLCommerz } from "../sslCommerz/sslCommerz.interface";
 import { SSLService } from "../sslCommerz/sslCommerz.service";
+import { clientEventSearchableFields } from "./event.constant";
 
 
 const getTransactionId = () => {
@@ -121,13 +122,108 @@ const getAllEvents = async (params: any, options: IPaginationOptions, user: any)
 
             return {
                 meta: { page, limit, total },
-                eventRequests: orderedEvents
+                allEvents: orderedEvents
             };
         }
     }
     return {
         meta: { page, limit, total },
         eventRequests: events
+    };
+};
+
+
+//  get my events 
+const getMyEvents = async (user: any, params: any, options: IPaginationOptions) => {
+    const { page, limit, skip } = paginationHelper.calculatePagination(options);
+    const { searchTerm, category, date, status, participantStatus, ...filterData } = params;
+
+    // Extract client ID
+    const clientRecord = await prisma.user.findUniqueOrThrow({
+        where: { email: user.email },
+        include: { client: true }
+    });
+
+    if (!clientRecord.client) {
+        throw new Error("You are not registered as a client");
+    }
+
+    const clientId = clientRecord.client.id;
+
+    const eventFilters: Prisma.EventWhereInput[] = [];
+
+    // Search filter inside event
+    if (searchTerm) {
+        eventFilters.push({
+            OR: clientEventSearchableFields.map(field => ({
+                [field]: {
+                    contains: searchTerm,
+                    mode: "insensitive",
+                },
+            })),
+        });
+    }
+
+    // event status filter
+    if (status) {
+        eventFilters.push({ status });
+    }
+
+    // category filter
+    if (category) {
+        eventFilters.push({
+            category: { has: category },
+        });
+    }
+
+    // date filter
+    if (date) {
+        const parsed = new Date(String(date));
+        if (!isNaN(parsed.getTime())) {
+            const start = new Date(parsed);
+            start.setHours(0, 0, 0, 0);
+
+            const end = new Date(parsed);
+            end.setHours(23, 59, 59, 999);
+
+            eventFilters.push({ date: { gte: start, lte: end } });
+        }
+    }
+
+    // Optional extra filters on event
+    if (Object.keys(filterData).length > 0) {
+        eventFilters.push({
+            AND: Object.keys(filterData).map(key => ({
+                [key]: { equals: (filterData as any)[key] },
+            })),
+        });
+    }
+
+    // Final query
+    const result = await prisma.eventParticipant.findMany({
+        where: {
+            clientId,
+            ...(participantStatus && { participantStatus }), // filter participantStatus
+            ...(eventFilters.length > 0 && { event: { AND: eventFilters } }),
+        },
+        include: {
+            event: true,
+            client: true,
+        },
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder
+            ? { [options.sortBy]: options.sortOrder }
+            : { createdAt: "desc" }
+    });
+
+    return {
+        meta: {
+            page,
+            limit,
+            total: result.length,
+        },
+        data: result
     };
 };
 
@@ -142,7 +238,7 @@ const getSingleEvent = async (id: string) => {
             host: true,
             participants: {
                 include: {
-                    client: true   // full client details (name, email, contact, location, etc.)
+                    client: true
                 }
             }
         }
@@ -176,6 +272,34 @@ const getSingleEvent = async (id: string) => {
         participantsInfo
     };
 };
+
+// get events participants
+const getEventsParticipants = async (eventId: string, filters: any, options: IPaginationOptions) => {
+    const { page, limit, skip } = paginationHelper.calculatePagination(options);
+
+    const result = await prisma.eventParticipant.findMany({
+        where: {
+            eventId,
+        },
+        include: {
+            client: true,
+        },
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder
+            ? { [options.sortBy]: options.sortOrder }
+            : { createdAt: "desc" }
+    });
+    return {
+        meta: {
+            page,
+            limit,
+            total: result.length,
+        },
+        data: result
+    };
+
+}
 
 // join event 
 
@@ -368,14 +492,15 @@ export const completeEvent = async (eventId: string, user: any) => {
     }
 
     const updated = await prisma.event.update({ where: { id: eventId }, data: { status: EventStatus.COMPLETED } });
-    
+
     return updated;
 }
 export const eventService = {
     getAllEvents,
     getSingleEvent,
     joinEvent,
-    leaveEvent
-    ,
-    completeEvent
+    leaveEvent,
+    getMyEvents,
+    completeEvent,
+    getEventsParticipants
 };

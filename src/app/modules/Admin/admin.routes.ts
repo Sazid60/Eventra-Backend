@@ -24,6 +24,23 @@ router.get(
     AdminController.getAllEventApplications
 );
 
+// get all Clients
+router.get(
+    '/clients',
+    auth(UserRole.ADMIN),
+    AdminController.getAllClients
+);
+
+// get all hosts 
+
+router.get(
+    '/hosts',
+    auth(UserRole.ADMIN),
+    AdminController.getAllHosts
+);
+
+
+
 // approve host application
 router.patch(
     '/host-applications/:id/approve',

@@ -1,7 +1,7 @@
 import { NextFunction, Request, RequestHandler, Response } from 'express';
 import { AdminService } from './admin.service';
 import pick from '../../../shared/pick';
-import { adminFilterableFields, eventFilterableFields, hostFilterableFields, hostSearchableFields } from './admin.constant';
+import { adminFilterableFields, clientFilterableFields, eventFilterableFields, hostFilterableFields, hostProfileFilterableFields, hostSearchableFields } from './admin.constant';
 
 import httpStatus from 'http-status';
 import { sendResponse } from '../../../shared/sendResponse';
@@ -98,11 +98,42 @@ const rejectEvent = catchAsync(async (req: Request, res: Response) => {
     })
 })
 
+const getAllClients: RequestHandler = catchAsync(async (req: Request, res: Response) => {
+    const filters = pick(req.query, clientFilterableFields);
+    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
+    const result = await AdminService.getAllClients(filters, options);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "All Clients fetched!",
+        data: result
+    });
+
+})
+
+const getAllHosts: RequestHandler = catchAsync(async (req: Request, res: Response) => {
+    const filters = pick(req.query, hostProfileFilterableFields);
+    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
+    const result = await AdminService.getAllHosts(filters, options);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "All Hosts fetched!",
+        data: result
+    });
+
+})
+
+
 export const AdminController = {
     getAllEventApplications,
     approveEventIntoDB,
     getAllHostApplications,
     approveHost,
     rejectHost,
-    rejectEvent
+    rejectEvent,
+    getAllClients,
+    getAllHosts
 }

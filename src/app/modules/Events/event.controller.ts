@@ -8,6 +8,7 @@ import { eventService } from "./event.service";
 import { jwtHelper } from "../../../helpers/jwtHelper";
 import { Secret } from "jsonwebtoken";
 import config from "../../../config";
+import { clientEventFilterableFields, participantFilterableFields } from "./event.constant";
 
 
 // get all events
@@ -31,6 +32,7 @@ const getAllEvents = catchAsync(async (req: Request & { user?: any }, res: Respo
         data: result
     });
 });
+
 const getSingleEvent = catchAsync(async (req: Request & { user?: any }, res: Response) => {
 
     const { id } = req.params;
@@ -43,6 +45,23 @@ const getSingleEvent = catchAsync(async (req: Request & { user?: any }, res: Res
         data: result
     });
 });
+
+
+const getEventsParticipants = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const filters = pick(req.query, participantFilterableFields);
+    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
+    const {id} = req.params;
+
+    const result = await eventService.getEventsParticipants(id, filters, options);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Events Participants List Retrieved successfully",
+        data: result
+    });
+});
+
 const joinEvent = catchAsync(async (req: Request & { user?: any }, res: Response) => {
 
     const { id } = req.params;
@@ -73,9 +92,32 @@ const leaveEvent = catchAsync(async (req: Request & { user?: any }, res: Respons
     });
 });
 
+// get my events 
+const getMyEvents = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const accessToken = req.cookies['accessToken'];
+    const filters = pick(req.query, clientEventFilterableFields);
+    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
+
+    const user = jwtHelper.verifyToken(
+        accessToken,
+        config.jwt.jwt_secret as Secret
+    );
+
+    const result = await eventService.getMyEvents(user, filters, options);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "My Events retrieved successfully",
+        data: result
+    });
+});
+
 export const eventController = {
     getAllEvents,
     getSingleEvent,
     joinEvent,
-    leaveEvent
+    leaveEvent,
+    getMyEvents,
+    getEventsParticipants
 };

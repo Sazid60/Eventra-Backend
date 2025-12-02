@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { catchAsync } from "../../../shared/catchAsync";
 import config from "../../../config";
 import { paymentServices } from "./payment.service";
+import { sendResponse } from "../../../shared/sendResponse";
+import { SSLService } from "../sslCommerz/sslCommerz.service";
 
 
 
@@ -30,8 +32,23 @@ const cancelPayment = catchAsync(async (req: Request, res: Response) => {
     }
 });
 
+const validatePayment = catchAsync(
+    async (req: Request, res: Response) => {
+        console.log("sslcommerz ipn url body", req.body);
+        await SSLService.validatePayment(req.body)
+        sendResponse(res, {
+            statusCode: 200,
+            success: true,
+            message: "Payment Validated Successfully",
+            data: null,
+        });
+    }
+);
+
+
 export const PaymentController = {
     successPayment,
     failPayment,
     cancelPayment,
+    validatePayment
 };
