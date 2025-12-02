@@ -6,6 +6,8 @@ import httpStatus from "http-status-codes"
 import { ISSLCommerz } from "./sslCommerz.interface"
 import config from "../../../config"
 import ApiError from "../../errors/ApiError"
+import prisma from "../../../shared/prisma"
+import { PaymentStatus } from "@prisma/client"
 
 
 const sslPaymentInit = async (payload: ISSLCommerz) => {
@@ -20,7 +22,7 @@ const sslPaymentInit = async (payload: ISSLCommerz) => {
             success_url: `${config.ssl.success_backend_url}?transactionId=${payload.transactionId}&amount=${payload.amount}&status=success`, //takes to default post 
             fail_url: `${config.ssl.fail_backend_url}?transactionId=${payload.transactionId}&amount=${payload.amount}&status=fail`, //takes to default post 
             cancel_url: `${config.ssl.cancel_backend_url}?transactionId=${payload.transactionId}&amount=${payload.amount}&status=cancel`, //takes to default post 
-            // ipn_url: config.ssl.ipn_url,
+            ipn_url: config.ssl.ipn_url,
             shipping_method: "N/A",
             product_name: "Eventra",
             product_category: "Service",
@@ -60,26 +62,29 @@ const sslPaymentInit = async (payload: ISSLCommerz) => {
 
 // this function will be called in a post method backend api. 
 // the flow will be like after successful payment the IPN url (post method made by us for our backend) will be automatically called and then inside the url validate payment function will be called 
-// const validatePayment = async (payload: any) => {
-//     try {
-//         const response = await axios({
-//             method: "GET",
-//             url: `${envVars.SSL.SSL_VALIDATION_API}?val_id=${payload.val_id}&store_id=${envVars.SSL.STORE_ID}&store_passwd=${envVars.SSL.STORE_PASS}`
-//         })
+const validatePayment = async (payload: any) => {
+    try {
+        const response = await axios({
+            method: "GET",
+            url: `${config.ssl.validation_api}?val_id=${payload.val_id}&store_id=${config.ssl.store_id}&store_passwd=${config.ssl.store_pass}`
+        })
 
-//         console.log("sslcomeerz validate api response", response.data);
+        console.log("sslcomeerz validate api response", response.data);
 
-//         await Payment.updateOne(
-//             { transactionId: payload.tran_id },
-//             { paymentGatewayData: response.data },
-//             { runValidators: true })
-//     } catch (error: any) {
-//         console.log(error);
-//         throw new AppError(401, `Payment Validation Error, ${error.message}`)
-//     }
-// }
+        await prisma.payment.update({
+            where: { transactionId: payload.tran_id },
+            data: {
+                paymentStatus: PaymentStatus.PAID,
+                invoiceUrl: "N/A"
+            }
+        })
+    } catch (error: any) {
+        console.log(error);
+        throw new ApiError(401, `Payment Validation Error, ${error.message}`)
+    }
+}
 
 export const SSLService = {
     sslPaymentInit,
-    // validatePayment
+    validatePayment
 }
