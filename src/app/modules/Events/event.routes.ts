@@ -31,6 +31,13 @@ router.get(
     eventController.getSingleEvent
 );
 
+// get participants list 
+router.get(
+    '/participants/:id',
+    auth(UserRole.CLIENT,UserRole.HOST, UserRole.ADMIN),
+    eventController.getEventsParticipants
+);
+
 // join event 
 router.post(
     '/join/:id',

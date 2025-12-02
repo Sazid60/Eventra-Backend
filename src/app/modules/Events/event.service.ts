@@ -122,7 +122,7 @@ const getAllEvents = async (params: any, options: IPaginationOptions, user: any)
 
             return {
                 meta: { page, limit, total },
-                eventRequests: orderedEvents
+                allEvents: orderedEvents
             };
         }
     }
@@ -212,7 +212,7 @@ const getMyEvents = async (user: any, params: any, options: IPaginationOptions) 
         },
         skip,
         take: limit,
-        orderBy: options.sortBy && options.sortOrder 
+        orderBy: options.sortBy && options.sortOrder
             ? { [options.sortBy]: options.sortOrder }
             : { createdAt: "desc" }
     });
@@ -272,6 +272,34 @@ const getSingleEvent = async (id: string) => {
         participantsInfo
     };
 };
+
+// get events participants
+const getEventsParticipants = async (eventId: string, filters: any, options: IPaginationOptions) => {
+    const { page, limit, skip } = paginationHelper.calculatePagination(options);
+
+    const result = await prisma.eventParticipant.findMany({
+        where: {
+            eventId,
+        },
+        include: {
+            client: true,
+        },
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder
+            ? { [options.sortBy]: options.sortOrder }
+            : { createdAt: "desc" }
+    });
+    return {
+        meta: {
+            page,
+            limit,
+            total: result.length,
+        },
+        data: result
+    };
+
+}
 
 // join event 
 
@@ -473,5 +501,6 @@ export const eventService = {
     joinEvent,
     leaveEvent,
     getMyEvents,
-    completeEvent
+    completeEvent,
+    getEventsParticipants
 };
