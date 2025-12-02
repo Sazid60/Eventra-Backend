@@ -14,7 +14,7 @@ const getTransactionId = () => {
 }
 
 // get my events
-const getAllEvents = async (params: any, options: IPaginationOptions, user?: any) => {
+const getAllEvents = async (params: any, options: IPaginationOptions, user: any) => {
     const { page, limit, skip } = paginationHelper.calculatePagination(options);
     const { searchTerm, category, date, status, ...filterData } = params;
 
@@ -79,7 +79,7 @@ const getAllEvents = async (params: any, options: IPaginationOptions, user?: any
 
     const total = await prisma.event.count({ where: whereConditions });
 
-    console.log("total  :",total)
+    console.log("total  :", total)
 
     console.log(user)
 
@@ -244,20 +244,18 @@ export const joinEvent = async (eventId: string, user: any) => {
                 paymentStatus: PaymentStatus.PENDING,
             },
         });
-
-        // Decrement capacity and set status to FULL if needed
-        let updatedEventData: any = {
-            capacity: { decrement: 1 },
-        };
-
-        if (eventForUpdate.capacity === 1) {
-            updatedEventData.status = EventStatus.FULL;
+        // Reserve seat: decrement capacity and set status to FULL when capacity reaches 0.
+        const newCapacity = eventForUpdate.capacity - 1;
+        if (newCapacity < 0) {
+            throw new Error('No seats available');
         }
 
-        const updatedEvent = await tx.event.update({
-            where: { id: eventId },
-            data: updatedEventData,
-        });
+        const eventUpdateData: any = { capacity: newCapacity };
+        if (newCapacity === 0) {
+            eventUpdateData.status = EventStatus.FULL;
+        }
+
+        const updatedEvent = await tx.event.update({ where: { id: eventId }, data: eventUpdateData });
 
         const sslPayload: ISSLCommerz = {
             address: client.location,

@@ -20,6 +20,8 @@ const getAllEvents = catchAsync(async (req: Request & { user?: any }, res: Respo
         accessToken,
         config.jwt.jwt_secret as Secret
     );
+
+    console.log(user)
     const result = await eventService.getAllEvents(filters, options, user);
 
     sendResponse(res, {
@@ -45,6 +47,9 @@ const joinEvent = catchAsync(async (req: Request & { user?: any }, res: Response
 
     const { id } = req.params;
     const user = req.user;
+
+    console.log(id)
+    console.log(user)
     const result = await eventService.joinEvent(id, user);
     sendResponse(res, {
         statusCode: httpStatus.OK,

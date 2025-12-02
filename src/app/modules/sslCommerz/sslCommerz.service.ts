@@ -20,9 +20,9 @@ const sslPaymentInit = async (payload: ISSLCommerz) => {
             success_url: `${config.ssl.success_backend_url}?transactionId=${payload.transactionId}&amount=${payload.amount}&status=success`, //takes to default post 
             fail_url: `${config.ssl.fail_backend_url}?transactionId=${payload.transactionId}&amount=${payload.amount}&status=fail`, //takes to default post 
             cancel_url: `${config.ssl.cancel_backend_url}?transactionId=${payload.transactionId}&amount=${payload.amount}&status=cancel`, //takes to default post 
-            ipn_url: config.ssl.ipn_url,
+            // ipn_url: config.ssl.ipn_url,
             shipping_method: "N/A",
-            product_name: "Tour",
+            product_name: "Eventra",
             product_category: "Service",
             product_profile: "general",
             cus_name: payload.name,
