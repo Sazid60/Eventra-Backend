@@ -2,25 +2,22 @@ import { Admin, Client, Prisma, UserRole, UserStatus } from "@prisma/client";
 import * as bcrypt from 'bcryptjs';
 import { Request } from "express";
 import config from "../../../config";
-import { fileUploader } from "../../../helpers/fileUploader";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import prisma from "../../../shared/prisma";
 import { IAuthUser } from "../../interfaces/common";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { userSearchAbleFields } from "./user.constant";
+import { deleteImageFromCloudinary } from "../../../config/cloudinary.config";
 
 
 
 
 const createClient = async (req: Request): Promise<Client> => {
-    const file = req.file;
 
-    let uploadedPublicId: string | undefined;
-    if (file) {
-        const uploadedProfileImage = await fileUploader.uploadToCloudinary(file);
-        req.body.client.profilePhoto = uploadedProfileImage?.secure_url;
-        uploadedPublicId = (uploadedProfileImage as any)?.public_id;
-    }
+    let imageUrl = "";
+
+    imageUrl = req.file?.path || "";
+
 
     const hashedPassword: string = await bcrypt.hash(req.body.password, Number(config.salt_round))
 
@@ -41,7 +38,10 @@ const createClient = async (req: Request): Promise<Client> => {
             });
 
             const createdClientData = await transactionClient.client.create({
-                data: req.body.client
+                data: {
+                    ...req.body.client,
+                    profilePhoto: imageUrl
+                }
             });
 
             return createdClientData;
@@ -49,9 +49,7 @@ const createClient = async (req: Request): Promise<Client> => {
 
         return result;
     } catch (error) {
-        if (uploadedPublicId) {
-            await fileUploader.deleteFromCloudinary(uploadedPublicId as string);
-        }
+        if (imageUrl) await deleteImageFromCloudinary(imageUrl);
         throw error;
     }
 };
@@ -224,7 +222,7 @@ const getMyProfile = async (user: IAuthUser) => {
 
 
 const updateMyProfile = async (user: IAuthUser, req: Request) => {
-
+    let newImageUrl = "";
     console.log(JSON.stringify(req.body))
 
     const userInfo = await prisma.user.findUniqueOrThrow({
@@ -237,13 +235,11 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
     console.log(userInfo)
 
 
-    const file = req.file;
-    let uploadedPublicId: string | undefined;
-    if (file) {
-        const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
-        req.body.profilePhoto = uploadToCloudinary?.secure_url;
-        uploadedPublicId = (uploadToCloudinary as any)?.public_id;
+    if (req.file) {
+        newImageUrl = req.file.path;
+        req.body.profilePhoto = newImageUrl;
     }
+
 
     let profileInfo;
 
@@ -260,6 +256,14 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
             const existingClient = await prisma.client.findUnique({
                 where: { email: userInfo.email },
             });
+
+            if(!existingClient){
+                throw new Error('Client not found');
+            }
+
+            if (newImageUrl) {
+                await deleteImageFromCloudinary(existingClient?.profilePhoto);
+            }
 
             // Handle interests merging
             if (req.body?.interests) {
@@ -289,9 +293,8 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
 
         return { ...profileInfo };
     } catch (error) {
-        if (uploadedPublicId) {
-            await fileUploader.deleteFromCloudinary(uploadedPublicId as string);
-        }
+        if (newImageUrl) await deleteImageFromCloudinary(newImageUrl);
+
         throw error;
     }
 }

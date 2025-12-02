@@ -96,7 +96,7 @@ const forgotPassword = async (payload: { email: string }) => {
 
     const resetPassToken = jwtHelper.generateToken(
         { email: userData.email, role: userData.role },
-        config.jwt.reset_pass_secret,
+        config.jwt.reset_pass_secret as Secret,
         config.jwt.reset_pass_token_expires_in as string
     )
 
@@ -122,7 +122,7 @@ const resetPassword = async (token: string, payload: { id: string, password: str
         }
     });
 
-    const isValidToken = jwtHelper.verifyToken(token, config.jwt.jwt_secret)
+    const isValidToken = jwtHelper.verifyToken(token, config.jwt.jwt_secret as Secret)
 
     if (!isValidToken) {
         throw new ApiError(httpStatus.FORBIDDEN, "Forbidden!")
@@ -148,7 +148,7 @@ const getMe = async (user: any) => {
 
     const decodedData = jwtHelper.verifyToken(
         accessToken,
-        config.jwt.jwt_secret
+        config.jwt.jwt_secret as Secret
     );
 
     const role = decodedData.role;
@@ -236,7 +236,7 @@ const applyHost = async (user: any) => {
     
     const decodedData = jwtHelper.verifyToken(
         accessToken,
-        config.jwt.jwt_secret
+        config.jwt.jwt_secret as Secret
     );
     const userData = await prisma.user.findUniqueOrThrow({
         where: {
