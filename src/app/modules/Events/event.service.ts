@@ -73,11 +73,15 @@ const getAllEvents = async (params: any, options: IPaginationOptions, user?: any
         orderBy:
             options.sortBy && options.sortOrder
                 ? { [options.sortBy]: options.sortOrder }
-                : { createdAt: "asc" },
+                : { createdAt: "desc" },
         include: { host: true }
     });
 
     const total = await prisma.event.count({ where: whereConditions });
+
+    console.log("total  :",total)
+
+    console.log(user)
 
 
     if (user && user.role !== "ADMIN") {
@@ -85,6 +89,10 @@ const getAllEvents = async (params: any, options: IPaginationOptions, user?: any
             where: { email: user.email },
             select: { interests: true }
         });
+
+        console.log(client)
+
+        console.log("client interests :", client?.interests);
 
         const host = await prisma.host.findUnique({
             where: { email: user.email },
@@ -101,6 +109,9 @@ const getAllEvents = async (params: any, options: IPaginationOptions, user?: any
                 const match = ev.category.some(c =>
                     userInterests.includes(c as any)
                 );
+
+                console.log("match :", match);
+                console.log("user Interest :", userInterests);
 
                 if (match) mindLikeEvents.push(ev);
                 else otherEvents.push(ev);

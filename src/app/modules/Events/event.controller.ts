@@ -5,14 +5,22 @@ import httpStatus from 'http-status';
 import pick from "../../../shared/pick";
 import { eventFilterableFields } from "../Admin/admin.constant";
 import { eventService } from "./event.service";
+import { jwtHelper } from "../../../helpers/jwtHelper";
+import { Secret } from "jsonwebtoken";
+import config from "../../../config";
 
 
 // get all events
 const getAllEvents = catchAsync(async (req: Request & { user?: any }, res: Response) => {
     const filters = pick(req.query, eventFilterableFields);
     const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
-    const result = await eventService.getAllEvents(filters, options, req.user);
+    const accessToken = req.cookies['accessToken'];
 
+    const user = jwtHelper.verifyToken(
+        accessToken,
+        config.jwt.jwt_secret as Secret
+    );
+    const result = await eventService.getAllEvents(filters, options, user);
 
     sendResponse(res, {
         statusCode: httpStatus.OK,
