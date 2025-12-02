@@ -337,9 +337,45 @@ export const leaveEvent = async (eventId: string, user: any) => {
     });
     return result;
 }
+// mark event as COMPLETED (only allowed when status is OPEN or FULL and event date/time has passed)
+export const completeEvent = async (eventId: string, user: any) => {
+
+    const event = await prisma.event.findUnique({ where: { id: eventId }, include: { host: true } });
+    if (!event) throw new Error('Event not found');
+
+    // Only allow completion when status is OPEN or FULL
+    if (!(event.status === EventStatus.OPEN || event.status === EventStatus.FULL)) {
+        throw new Error('Event cannot be marked completed unless it is OPEN or FULL');
+    }
+
+    const now = new Date();
+    // Do not allow marking completed before the event date/time
+    if (now.getTime() < new Date(event.date).getTime()) {
+        throw new Error('Event date/time has not occurred yet');
+    }
+
+    // Permission: allow ADMIN or the host who owns the event
+    if (user && user.role !== 'ADMIN') {
+        if (user.role === 'HOST') {
+            // verify host identity by email
+            const host = await prisma.host.findUnique({ where: { email: user.email } });
+            if (!host || host.id !== event.hostId) {
+                throw new Error('You are not authorized to complete this event');
+            }
+        } else {
+            throw new Error('You are not authorized to complete this event');
+        }
+    }
+
+    const updated = await prisma.event.update({ where: { id: eventId }, data: { status: EventStatus.COMPLETED } });
+    
+    return updated;
+}
 export const eventService = {
     getAllEvents,
     getSingleEvent,
     joinEvent,
     leaveEvent
+    ,
+    completeEvent
 };
