@@ -132,7 +132,7 @@ const applyHost = catchAsync(async (req: Request, res: Response) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: "Host application submitted successfully",
+        message: "Your Host Request has Been Successful! Please Wait For The Approval of the of Admin!",
         data: result,
     });
 });

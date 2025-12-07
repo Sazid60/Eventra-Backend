@@ -12,7 +12,7 @@ const successPayment = catchAsync(async (req: Request, res: Response) => {
     const result = await paymentServices.successPayment(query as Record<string, string>)
 
     if (result.success) {
-        res.redirect(`${config.FRONTEND_URL}/all-events/${query.transactionId}`)
+        res.redirect(`${config.FRONTEND_URL}/my-booked-events`)
     }
 });
 const failPayment = catchAsync(async (req: Request, res: Response) => {

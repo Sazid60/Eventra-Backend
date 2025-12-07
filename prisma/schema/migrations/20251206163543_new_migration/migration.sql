@@ -17,10 +17,13 @@ CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'PAID', 'CANCELLED', 'REFUNDED')
 CREATE TYPE "Gender" AS ENUM ('MALE', 'FEMALE');
 
 -- CreateEnum
-CREATE TYPE "EventCategory" AS ENUM ('MUSIC', 'MOVIE', 'THEATER', 'COMEDY', 'PARTY', 'NIGHTLIFE', 'CONCERT', 'FESTIVAL', 'SPORTS', 'HIKING', 'CYCLING', 'RUNNING', 'FITNESS', 'CAMPING', 'OUTDOOR', 'ADVENTURE', 'SOCIAL', 'NETWORKING', 'MEETUP', 'COMMUNITY', 'VOLUNTEERING', 'CULTURE', 'RELIGION', 'FOOD', 'DINNER', 'COOKING', 'TASTING', 'CAFE', 'RESTAURANT', 'TECH', 'WORKSHOP', 'SEMINAR', 'CONFERENCE', 'EDUCATION', 'LANGUAGE', 'BUSINESS', 'FINANCE', 'ART', 'CRAFT', 'PHOTOGRAPHY', 'PAINTING', 'WRITING', 'DANCE', 'GAMING', 'ESPORTS', 'BOARDGAME', 'CARDGAME', 'ONLINE_EVENT', 'TRAVEL', 'TOUR', 'ROADTRIP', 'OTHER');
+CREATE TYPE "EventCategory" AS ENUM ('MUSIC', 'MOVIE', 'THEATER', 'COMEDY', 'PARTY', 'NIGHTLIFE', 'CONCERT', 'FESTIVAL', 'SPORTS', 'HIKING', 'CYCLING', 'RUNNING', 'FITNESS', 'CAMPING', 'OUTDOOR', 'ADVENTURE', 'SOCIAL', 'NETWORKING', 'MEETUP', 'COMMUNITY', 'VOLUNTEERING', 'CULTURE', 'RELIGION', 'FOOD', 'DINNER', 'COOKING', 'TASTING', 'CAFE', 'RESTAURANT', 'TECH', 'WORKSHOP', 'SEMINAR', 'CONFERENCE', 'EDUCATION', 'LANGUAGE', 'BUSINESS', 'FINANCE', 'ART', 'CRAFT', 'PHOTOGRAPHY', 'PAINTING', 'WRITING', 'DANCE', 'GAMING', 'ESPORTS', 'ONLINE_EVENT', 'TRAVEL', 'TOUR', 'ROADTRIP', 'OTHER');
 
 -- CreateEnum
-CREATE TYPE "Interest" AS ENUM ('MUSIC', 'SPORTS', 'HIKING', 'TRAVEL', 'COOKING', 'READING', 'DANCING', 'GAMING', 'TECHNOLOGY', 'PHOTOGRAPHY', 'ART', 'MOVIES', 'FITNESS', 'YOGA', 'CYCLING', 'RUNNING', 'CAMPING', 'FISHING', 'LANGUAGES', 'FOOD', 'VOLUNTEERING', 'GARDENING', 'WRITING', 'FASHION', 'BUSINESS', 'FINANCE', 'MEDITATION', 'DIY', 'PETS', 'SOCIALIZING', 'OTHER');
+CREATE TYPE "Interest" AS ENUM ('MUSIC', 'MOVIE', 'THEATER', 'COMEDY', 'PARTY', 'NIGHTLIFE', 'CONCERT', 'FESTIVAL', 'SPORTS', 'HIKING', 'CYCLING', 'RUNNING', 'FITNESS', 'CAMPING', 'OUTDOOR', 'ADVENTURE', 'SOCIAL', 'NETWORKING', 'MEETUP', 'COMMUNITY', 'VOLUNTEERING', 'CULTURE', 'RELIGION', 'FOOD', 'DINNER', 'COOKING', 'TASTING', 'CAFE', 'RESTAURANT', 'TECH', 'WORKSHOP', 'SEMINAR', 'CONFERENCE', 'EDUCATION', 'LANGUAGE', 'BUSINESS', 'FINANCE', 'ART', 'CRAFT', 'PHOTOGRAPHY', 'PAINTING', 'WRITING', 'DANCE', 'GAMING', 'ESPORTS', 'ONLINE_EVENT', 'TRAVEL', 'TOUR', 'ROADTRIP', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "ParticipantStatus" AS ENUM ('CONFIRMED', 'LEFT', 'PENDING');
 
 -- CreateTable
 CREATE TABLE "events" (
@@ -44,9 +47,11 @@ CREATE TABLE "events" (
 -- CreateTable
 CREATE TABLE "event_participants" (
     "id" TEXT NOT NULL,
+    "transactionId" TEXT NOT NULL,
     "eventId" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "participantStatus" "ParticipantStatus" NOT NULL DEFAULT 'PENDING',
 
     CONSTRAINT "event_participants_pkey" PRIMARY KEY ("id")
 );
@@ -54,6 +59,8 @@ CREATE TABLE "event_participants" (
 -- CreateTable
 CREATE TABLE "HostApplication" (
     "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -65,11 +72,15 @@ CREATE TABLE "HostApplication" (
 -- CreateTable
 CREATE TABLE "payments" (
     "id" TEXT NOT NULL,
+    "transactionId" TEXT NOT NULL,
+    "paymentGatewayData" JSONB,
     "amount" DOUBLE PRECISION NOT NULL,
     "paymentStatus" "PaymentStatus" NOT NULL DEFAULT 'PENDING',
+    "invoiceUrl" TEXT,
     "eventId" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
     "hostId" TEXT NOT NULL,
+    "participantId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "payments_pkey" PRIMARY KEY ("id")
@@ -109,6 +120,7 @@ CREATE TABLE "admins" (
     "email" TEXT NOT NULL,
     "profilePhoto" TEXT NOT NULL,
     "contactNumber" TEXT NOT NULL,
+    "interests" "Interest"[] DEFAULT ARRAY['OTHER']::"Interest"[],
     "income" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -142,6 +154,7 @@ CREATE TABLE "hosts" (
     "profilePhoto" TEXT NOT NULL,
     "contactNumber" TEXT NOT NULL,
     "bio" TEXT NOT NULL,
+    "interests" "Interest"[],
     "location" TEXT NOT NULL,
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -152,6 +165,15 @@ CREATE TABLE "hosts" (
 
     CONSTRAINT "hosts_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "event_participants_transactionId_key" ON "event_participants"("transactionId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "HostApplication_email_key" ON "HostApplication"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "payments_transactionId_key" ON "payments"("transactionId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");

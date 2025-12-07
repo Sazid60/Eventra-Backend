@@ -40,6 +40,23 @@ router.get(
 );
 
 
+// suspend 
+
+router.patch(
+    '/suspend-user/:id',
+    auth(UserRole.ADMIN),
+    AdminController.suspendUser
+)
+
+// un-suspend user 
+
+router.patch(
+    '/unsuspend-user/:id',
+    auth(UserRole.ADMIN),
+    AdminController.unsuspendUser
+)
+
+
 
 // approve host application
 router.patch(

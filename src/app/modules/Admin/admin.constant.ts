@@ -2,7 +2,7 @@ export const adminFilterableFields = ['name', 'email', 'searchTerm', 'contactNum
 
 export const adminSearchAbleFields = ['name', 'email', 'contactNumber'];
 
-export const hostSearchableFields = ["id"]
+export const hostSearchableFields = ["name", "email"]
 export const hostFilterableFields = ["status", "searchTerm"]
 
 export const eventFilterableFields = ['status', "category", "date", 'searchTerm'];
