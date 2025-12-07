@@ -63,6 +63,7 @@ const createReview = async (transactionId: string, user: any, payload: CreateRev
             data: {
                 rating: payload.rating,
                 comment: payload.comment || null,
+                transactionId: payment.transactionId,
                 eventId,
                 clientId: client.id,
                 hostId: hostId,

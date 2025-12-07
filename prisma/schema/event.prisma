@@ -20,16 +20,32 @@ model Event {
     @@map("events")
 }
 
+// model EventParticipant {
+//     id        String   @id @default(uuid())
+//     transactionId String @unique
+//     eventId   String
+//     clientId  String
+//     createdAt DateTime @default(now())
+//     participantStatus ParticipantStatus @default(PENDING)
+
+//     event  Event  @relation(fields: [eventId], references: [id])
+//     client Client @relation(fields: [clientId], references: [id])
+
+//     @@map("event_participants")
+// }
+
+
 model EventParticipant {
-    id        String   @id @default(uuid())
-    transactionId String @unique
-    eventId   String
-    clientId  String
-    createdAt DateTime @default(now())
+    id                String            @id @default(uuid())
+    transactionId     String            @unique
+    eventId           String
+    clientId          String
+    createdAt         DateTime          @default(now())
     participantStatus ParticipantStatus @default(PENDING)
 
     event  Event  @relation(fields: [eventId], references: [id])
     client Client @relation(fields: [clientId], references: [id])
+    review Review? @relation("ParticipantReview") 
 
     @@map("event_participants")
 }

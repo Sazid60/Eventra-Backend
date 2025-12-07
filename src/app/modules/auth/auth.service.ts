@@ -15,16 +15,26 @@ import httpStatus from 'http-status-codes';
 
 
 const loginUser = async (payload: { email: string, password: string }) => {
-    const user = await prisma.user.findUniqueOrThrow({
+    const user = await prisma.user.findFirst({
         where: {
             email: payload.email,
-            status: UserStatus.ACTIVE
+            // status: UserStatus.ACTIVE
         }
     })
+
+    if(!user){
+        throw new ApiError(httpStatus.BAD_REQUEST, "Credential Not Valid!")
+    }
+
+    
 
     const isCorrectPassword = await bcrypt.compare(payload.password, user.password);
     if (!isCorrectPassword) {
         throw new ApiError(httpStatus.BAD_REQUEST, "Password is incorrect!")
+    }
+
+    if(user.status === "PENDING") {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Your Host Request is still pending. Please wait for approval.");
     }
     const userToken = createUserToken(user);
 
@@ -102,15 +112,15 @@ const forgotPassword = async (payload: { email: string }) => {
 
     const resetPassLink = config.reset_pass_link + `?userId=${userData.id}&token=${resetPassToken}`
 
-    await sendEmail({
-        to: userData.email,
-        subject: "Password Reset Request",
-        templateName: "reset-password",
-        templateData: {
-            name: userData.email.split("@")[0],
-            resetPassLink,
-        }
-    });
+    // await sendEmail({
+    //     to: userData.email,
+    //     subject: "Password Reset Request",
+    //     templateName: "reset-password",
+    //     templateData: {
+    //         name: userData.email.split("@")[0],
+    //         resetPassLink,
+    //     }
+    // });
 };
 
 const resetPassword = async (token: string, payload: { id: string, password: string }) => {
@@ -241,6 +251,9 @@ const applyHost = async (user: any) => {
     const userData = await prisma.user.findUniqueOrThrow({
         where: {
             id: decodedData.userId
+        },
+        include:{
+            client : true
         }
     });
 
@@ -248,6 +261,10 @@ const applyHost = async (user: any) => {
 
     if (!userData) {
         throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    if (!userData.client) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Client profile not found");
     }
 
     const existingApplication = await prisma.hostApplication.findFirst({
@@ -264,6 +281,8 @@ const applyHost = async (user: any) => {
         const application = await transactionClient.hostApplication.create({
             data: {
                 userId: userData.id,
+                name: userData.client!.name,
+                email : userData.client!.email
             }
         });
 
@@ -282,15 +301,15 @@ const applyHost = async (user: any) => {
             }
         });
 
-        await sendEmail({
-            to: userData.email,
-            subject: "Your Host Application Submitted",
-            templateName: "host-application-submitted",
-            templateData: {
-                name: clientData ? clientData.name : userData.email.split("@")[0],
-                applicationId: application.id,
-            }
-        });
+        // await sendEmail({
+        //     to: userData.email,
+        //     subject: "Your Host Application Submitted",
+        //     templateName: "host-application-submitted",
+        //     templateData: {
+        //         name: clientData ? clientData.name : userData.email.split("@")[0],
+        //         applicationId: application.id,
+        //     }
+        // });
 
         return { ...application, ...userUpdate };
     });

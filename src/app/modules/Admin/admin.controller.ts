@@ -126,6 +126,33 @@ const getAllHosts: RequestHandler = catchAsync(async (req: Request, res: Respons
 
 })
 
+const suspendUser = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const result = await AdminService.suspendUser(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "User suspended successfully!",
+        data: result
+    })
+})
+
+
+// un-suspend user
+
+const unsuspendUser = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const result = await AdminService.unsuspendUser(id);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "User unsuspended successfully!",
+        data: result
+    })
+})
+
 
 export const AdminController = {
     getAllEventApplications,
@@ -135,5 +162,7 @@ export const AdminController = {
     rejectHost,
     rejectEvent,
     getAllClients,
-    getAllHosts
+    getAllHosts,
+    suspendUser,
+    unsuspendUser
 }

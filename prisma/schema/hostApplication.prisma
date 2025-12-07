@@ -1,5 +1,7 @@
 model HostApplication {
     id        String   @id @default(uuid())
+    name      String
+    email     String   
     userId    String
     status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
     createdAt DateTime @default(now())

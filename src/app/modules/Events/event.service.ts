@@ -24,6 +24,10 @@ const getAllEvents = async (params: any, options: IPaginationOptions, user: any)
     // Always get OPEN events
     andConditions.push({ status: EventStatus.OPEN });
 
+    // Only show events with dates in the future
+    const now = new Date();
+    andConditions.push({ date: { gte: now } });
+
     // Search
     if (searchTerm) {
         andConditions.push({
@@ -274,31 +278,46 @@ const getSingleEvent = async (id: string) => {
 };
 
 // get events participants
-const getEventsParticipants = async (eventId: string, filters: any, options: IPaginationOptions) => {
-    const { page, limit, skip } = paginationHelper.calculatePagination(options);
+// const getEventsParticipants = async (eventId: string) => {
+//     // const { page, limit, skip } = paginationHelper.calculatePagination(options);
 
+//     const result = await prisma.eventParticipant.findMany({
+//         where: {
+//             eventId,
+//             participantStatus: { not: ParticipantStatus.LEFT }
+//         },
+//         include: {
+//             client: true
+//         }
+//     });
+//     return {
+//         data: result
+//     };
+
+// }
+
+// get events participants
+const getEventsParticipants = async (eventId: string) => {
     const result = await prisma.eventParticipant.findMany({
         where: {
             eventId,
+            participantStatus: { not: ParticipantStatus.LEFT }
         },
         include: {
             client: true,
-        },
-        skip,
-        take: limit,
-        orderBy: options.sortBy && options.sortOrder
-            ? { [options.sortBy]: options.sortOrder }
-            : { createdAt: "desc" }
+            review: true,  // ← ADD THIS
+        }
     });
-    return {
-        meta: {
-            page,
-            limit,
-            total: result.length,
-        },
-        data: result
-    };
 
+    const participantsWithReviewStatus = result.map(participant => ({
+        ...participant,
+        hasReviewed: !!participant.review,  
+        review: undefined,  
+    }));
+
+    return {
+        data: participantsWithReviewStatus
+    };
 }
 
 // join event 

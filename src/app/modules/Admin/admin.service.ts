@@ -5,19 +5,25 @@ import { paginationHelper } from "../../../helpers/paginationHelper";
 
 
 import { IPaginationOptions } from "../../interfaces/pagination";
-import { adminSearchAbleFields, eventSearchableFields, clientSearchableFields, hostProfileSearchableFields } from "./admin.constant";
+import { eventSearchableFields, clientSearchableFields, hostProfileSearchableFields, hostSearchableFields } from "./admin.constant";
 import prisma from "../../../shared/prisma";
-import { sendEmail } from "../../../helpers/sendEmail";
 
 
 const getAllHostApplications = async (params: any, options: IPaginationOptions) => {
     const { page, limit, skip } = paginationHelper.calculatePagination(options);
     const { searchTerm, ...filterData } = params;
-    const andConditions: Prisma.AdminWhereInput[] = [];
+    const andConditions: Prisma.HostApplicationWhereInput[] = [];
+
+    // Only show PENDING and REJECTED applications
+    andConditions.push({
+        status: {
+            in: [HostApplicationStatus.PENDING]
+        }
+    });
 
     if (params.searchTerm) {
         andConditions.push({
-            OR: adminSearchAbleFields.map(field => ({
+            OR: hostSearchableFields.map(field => ({
                 [field]: {
                     contains: params.searchTerm,
                     mode: 'insensitive'
@@ -127,7 +133,7 @@ const getAllClients = async (params: any, options: IPaginationOptions) => {
         take: limit,
         orderBy: options.sortBy && options.sortOrder ? { [options.sortBy]: options.sortOrder } : { createdAt: 'desc' },
         include: {
-            client: true, 
+            client: true,
         }
     });
 
@@ -203,7 +209,7 @@ const getAllHosts = async (params: any, options: IPaginationOptions) => {
         take: limit,
         orderBy: options.sortBy && options.sortOrder ? { [options.sortBy]: options.sortOrder } : { createdAt: 'desc' },
         include: {
-            host: true, 
+            host: true,
         }
     });
 
@@ -233,6 +239,8 @@ const getAllEventApplications = async (params: any, options: IPaginationOptions)
     if (status) {
         andConditions.push({ status: status as any });
     }
+
+    andConditions.push({ status: "PENDING" });
 
     if (category) {
         andConditions.push({
@@ -342,15 +350,17 @@ const approveHostApplication = async (id: string) => {
                 location: existingClientInfo.location
             }
         });
+        
 
-        await sendEmail({
-            to: newHost.email,
-            subject: "Congratulations! Your Host Application Approved",
-            templateName: "host-application-approved",
-            templateData: {
-                name: newHost.name,
-            }
-        });
+        // await sendEmail({
+        //     to: newHost.email,
+        //     subject: "Congratulations! Your Host Application Approved",
+        //     templateName: "host-application-approved",
+        //     templateData: {
+        //         name: newHost.name,
+        //     }
+        // });
+        
 
         return {
             message: "Host approved successfully",
@@ -404,14 +414,14 @@ const rejectHostApplication = async (id: string) => {
         };
     });
 
-    await sendEmail({
-        to: existingClientInfo.email,
-        subject: "Host Application Status Update",
-        templateName: "host-application-rejected",
-        templateData: {
-            name: existingClientInfo.name || "User",
-        }
-    });
+    // await sendEmail({
+    //     to: existingClientInfo.email,
+    //     subject: "Host Application Status Update",
+    //     templateName: "host-application-rejected",
+    //     templateData: {
+    //         name: existingClientInfo.name || "User",
+    //     }
+    // });
 
     return result;
 };
@@ -436,14 +446,14 @@ const approveEventIntoDB = async (id: string) => {
         data: { status: EventStatus.OPEN }
     });
 
-    await sendEmail({
-        to: result.host.email,
-        subject: "Event Application Approval Update",
-        templateName: "event-application-approved",
-        templateData: {
-            name: result.host.name,
-        }
-    });
+    // await sendEmail({
+    //     to: result.host.email,
+    //     subject: "Event Application Approval Update",
+    //     templateName: "event-application-approved",
+    //     templateData: {
+    //         name: result.host.name,
+    //     }
+    // });
 
     return result;
 };
@@ -470,16 +480,59 @@ const rejectEvent = async (id: string) => {
         data: { status: EventStatus.REJECTED }
     });
 
-    await sendEmail({
-        to: result.host.email,
-        subject: "Event Application Rejected",
-        templateName: "event-application-rejected",
-        templateData: {
-            name: result.host.name,
-        }
-    });
+    // await sendEmail({
+    //     to: result.host.email,
+    //     subject: "Event Application Rejected",
+    //     templateName: "event-application-rejected",
+    //     templateData: {
+    //         name: result.host.name,
+    //     }
+    // });
     return result;
 }
+
+const suspendUser = async (id: string) => {
+    console.log(id)
+
+    const isExistingUser = await prisma.user.findUniqueOrThrow({
+        where: { id }
+    });
+
+    if (!isExistingUser) {
+        throw new Error("User not found");
+    }
+
+    const result = await prisma.user.update({
+        where: { id },
+        data: {
+            status: UserStatus.SUSPENDED
+        }
+    });
+
+    return result;
+}
+
+const unsuspendUser = async (id: string) => {
+    console.log(id)
+
+    const isExistingUser = await prisma.user.findUniqueOrThrow({
+        where: { id }
+    });
+
+    if (!isExistingUser) {
+        throw new Error("User not found");
+    }
+
+    const result = await prisma.user.update({
+        where: { id },
+        data: {
+            status: UserStatus.ACTIVE
+        }
+    });
+
+    return result;
+}
+
 
 export const AdminService = {
     getAllEventApplications,
@@ -489,5 +542,7 @@ export const AdminService = {
     rejectHostApplication,
     rejectEvent,
     getAllClients,
-    getAllHosts
+    getAllHosts,
+    suspendUser,
+    unsuspendUser
 }

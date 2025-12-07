@@ -17,10 +17,17 @@ const getAllEvents = catchAsync(async (req: Request & { user?: any }, res: Respo
     const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
     const accessToken = req.cookies['accessToken'];
 
-    const user = jwtHelper.verifyToken(
-        accessToken,
-        config.jwt.jwt_secret
-    );
+    let user;
+    if (accessToken) {
+        user = jwtHelper.verifyToken(
+            accessToken,
+            config.jwt.jwt_secret
+        );
+    } else{
+        user = null;
+    }
+
+    console.log(req)
 
     console.log(user)
     const result = await eventService.getAllEvents(filters, options, user);
@@ -48,11 +55,10 @@ const getSingleEvent = catchAsync(async (req: Request & { user?: any }, res: Res
 
 
 const getEventsParticipants = catchAsync(async (req: Request & { user?: any }, res: Response) => {
-    const filters = pick(req.query, participantFilterableFields);
-    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder'])
-    const {id} = req.params;
 
-    const result = await eventService.getEventsParticipants(id, filters, options);
+    const { id } = req.params;
+
+    const result = await eventService.getEventsParticipants(id);
 
     sendResponse(res, {
         statusCode: httpStatus.OK,
