@@ -29,8 +29,10 @@
 // }
 
 import prisma from "../../../shared/prisma";
-import { PaymentStatus, ParticipantStatus, EventStatus } from "@prisma/client";
+import { PaymentStatus, ParticipantStatus, EventStatus, UserRole, Prisma } from "@prisma/client";
 import { sendEmail } from "../../../helpers/sendEmail";
+import { IPaginationOptions } from "../../interfaces/pagination";
+import { paginationHelper } from "../../../helpers/paginationHelper";
 
 // Handle successful payment callback
 const successPayment = async (query: Record<string, string>) => {
@@ -208,8 +210,82 @@ const cancelPayment = async (query: Record<string, string>) => {
     return result;
 };
 
+// Get user-specific payments with search and pagination
+// Admin sees all payments, Host sees only his created events' payments
+// Search by: transactionId and client name
+const getUserPayments = async (params: any, options: IPaginationOptions, user: any) => {
+    const { page, limit, skip } = paginationHelper.calculatePagination(options);
+    const { searchTerm, paymentStatus, ...filterData } = params;
+
+    const andConditions: Prisma.PaymentWhereInput[] = [];
+
+    // Filter based on user role
+    if (user.role === UserRole.HOST) {
+        // Host: find his host profile first, then filter payments for his events
+        const host = await prisma.host.findUnique({
+            where: { email: user.email },
+            select: { id: true }
+        });
+
+        if (!host) throw new Error("Host profile not found");
+
+        andConditions.push({
+            hostId: host.id
+        });
+    }
+    // ADMIN sees all payments (no additional filter)
+
+    // Search by transactionId or client name
+    if (searchTerm) {
+        andConditions.push({
+            OR: [
+                { transactionId: { contains: searchTerm, mode: 'insensitive' } },
+                { client: { name: { contains: searchTerm, mode: 'insensitive' } } }
+            ]
+        });
+    }
+
+    // Filter by payment status
+    if (paymentStatus) {
+        andConditions.push({ paymentStatus: paymentStatus as PaymentStatus });
+    }
+
+    // Additional dynamic filters
+    if (Object.keys(filterData).length > 0) {
+        andConditions.push({
+            AND: Object.keys(filterData).map(key => ({
+                [key]: { equals: (filterData as any)[key] }
+            }))
+        });
+    }
+
+    const whereConditions: Prisma.PaymentWhereInput =
+        andConditions.length > 0 ? { AND: andConditions } : {};
+
+    const result = await prisma.payment.findMany({
+        where: whereConditions,
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder
+            ? { [options.sortBy]: options.sortOrder }
+            : { createdAt: 'desc' },
+        include: {
+            event: { select: { id: true, title: true, date: true } },
+            client: { select: { id: true, name: true, email: true } }
+        }
+    });
+
+    const total = await prisma.payment.count({ where: whereConditions });
+
+    return {
+        meta: { page, limit, total },
+        data: result
+    };
+};
+
 export const paymentServices = {
     successPayment,
     failPayment,
     cancelPayment,
-}
+    getUserPayments
+};

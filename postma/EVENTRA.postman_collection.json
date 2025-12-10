@@ -1,0 +1,1043 @@
+{
+	"info": {
+		"_postman_id": "37245d92-758a-4178-850c-9acbfff52535",
+		"name": "EVENTRA",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "39770401"
+	},
+	"item": [
+		{
+			"name": "USER",
+			"item": [
+				{
+					"name": "register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "postman-cloud:///1f0ce0e8-3112-4bd0-8b52-ea687b9254a7"
+								},
+								{
+									"key": "data",
+									"value": "{\n    \"password\": \"Client@12345\",\n    \"client\": {\n      \"name\": \"Frank\",\n      \"email\": \"Munna@client.com\",\n      \"contactNumber\": \"+8801800000001\",\n      \"location\": \"Dhaka, Bangladesh\",\n      \"bio\": \"Music and cultural events organizer\",\n      \"interests\": [\"MUSIC\", \"CULTURE\", \"DANCE\"]\n    }\n  }",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URL}}/user/create-client",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"user",
+								"create-client"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update-profile",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "data",
+									"value": "{\n  \"interests\": [\"MOVIE\", \"PARTY\"],\n\"name\" : \"Sazid\"\n}",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URL}}/user/update-my-profile",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"user",
+								"update-my-profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ask-query",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"John Doe\",\r\n  \"email\": \"john@example.com\",\r\n  \"contactNumber\": \"+1234567890\",\r\n  \"subject\": \"Inquiry about events\",\r\n  \"message\": \"I would like to know more about hosting events...\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/user/send-email",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"user",
+								"send-email"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AUTH",
+			"item": [
+				{
+					"name": "GET-ME",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/auth/me",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "refresh-token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "// {\r\n//     \"password\":\"sazid201@ph.com\",\r\n//     \"email\":\"sazid201@ph.com\"\r\n// }\r\n// {\r\n//     \"password\": \"adminPassword123\",\r\n//     \"email\": \"alice.admin@example.com\"\r\n// }\r\n{\r\n    \"password\": \"doctorPassword123\",\r\n    \"email\": \"bob.doctor@example.com\"\r\n}"
+						},
+						"url": {
+							"raw": "{{URL}}/auth/refresh-token",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"auth",
+								"refresh-token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reset-pass",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InNoYWhuYXdhenNhemlkNjBAZ21haWwuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzY0MzM1MzE4LCJleHAiOjE3NjQzMzU2MTh9.obcYAlVcU54iGjvOsesaq19pze5g1iM3v6Oi66COcSA",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"a73746b0-c04f-48b6-8277-674f1b6cdf39\",\n    \"newPassword\": \"Admin@123456\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/auth/reset-password",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"auth",
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "apply-host",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{URL}}/auth/apply-host",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"auth",
+								"apply-host"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "LOGIN",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\r\n// {\r\n//     \"password\": \"Host@12345\",\r\n//     \"email\": \"frank@host.com\"\r\n// }\r\n\r\n// {\r\n//     \"password\": \"vyvoxe@mailinator.com\",\r\n//     \"email\": \"vyvoxe@mailinator.com\"\r\n// }\r\n\r\n{\r\n    \"password\": \"Admin@12345\",\r\n    \"email\": \"admin@gmail.com\"\r\n}\r\n// {\r\n//     \"password\": \"butahivi@mailinator.com\",\r\n//     \"email\": \"butahivi@mailinator.com\"\r\n// }\r\n// {\r\n//     \"password\": \"Client@12345\",\r\n//     \"email\": \"Munna@client.com\"\r\n// }\r\n// {\r\n//     \"password\": \"sowuzywu@mailinator.com\",\r\n//     \"email\": \"sowuzywu@mailinator.com\"\r\n// }\r\n\r\n// {\r\n//     \"password\": \"multer@12345\",\r\n//     \"email\": \"multer@host.com\"\r\n// }\r\n\r\n// {\r\n//     \"password\": \"Client@12345\",\r\n//     \"email\": \"alice@gmail.com\"\r\n// }\r\n\r\n\r\n\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/auth/login",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ADMIN",
+			"item": [
+				{
+					"name": "GET-ALL-HOST-APPLICATIONS",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/admin/host-applications",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"admin",
+								"host-applications"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "REJECTED",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET-ALL-EVENTS-APPLICATIONS",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/admin/event-applications",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"admin",
+								"event-applications"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "OPEN",
+									"disabled": true
+								},
+								{
+									"key": "searchTerm",
+									"value": "CONCERT",
+									"disabled": true
+								},
+								{
+									"key": "category",
+									"value": "COOKING",
+									"disabled": true
+								},
+								{
+									"key": "title",
+									"value": "Corom",
+									"disabled": true
+								},
+								{
+									"key": "date",
+									"value": "2025-09-15",
+									"disabled": true
+								},
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "APPROVE HOST",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/admin/host-applications/8e0b5149-2dd4-445f-b23a-bf77bf490f92/approve",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"admin",
+								"host-applications",
+								"8e0b5149-2dd4-445f-b23a-bf77bf490f92",
+								"approve"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RJECT-HOST",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/admin/host-applications/b6326665-a0dc-4b64-8186-ca8063ea20f8/reject",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"admin",
+								"host-applications",
+								"b6326665-a0dc-4b64-8186-ca8063ea20f8",
+								"reject"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "APPROVE-EVENT",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/admin/event-application/6d4250b0-4312-422e-acd7-f6fbc04ebe86/approve",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"admin",
+								"event-application",
+								"6d4250b0-4312-422e-acd7-f6fbc04ebe86",
+								"approve"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "REJECT-EVENT",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/admin/event-application/f032ebf8-38e6-41ea-9cae-c1b633577bda/reject",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"admin",
+								"event-application",
+								"f032ebf8-38e6-41ea-9cae-c1b633577bda",
+								"reject"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-clients",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/admin/clients",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"admin",
+								"clients"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "ACTIVE",
+									"disabled": true
+								},
+								{
+									"key": "searchTerm",
+									"value": "eva",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-all-hosts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/admin/hosts",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"admin",
+								"hosts"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "ACTIVE",
+									"disabled": true
+								},
+								{
+									"key": "searchTerm",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "suspend-user",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/admin/suspend-user/987fc5e0-04ff-4e83-95a3-82317c2f21da",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"admin",
+								"suspend-user",
+								"987fc5e0-04ff-4e83-95a3-82317c2f21da"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "un-suspend",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/admin/unsuspend-user/987fc5e0-04ff-4e83-95a3-82317c2f21da",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"admin",
+								"unsuspend-user",
+								"987fc5e0-04ff-4e83-95a3-82317c2f21da"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "HOST",
+			"item": [
+				{
+					"name": "CREATE-EVENT",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "data",
+									"value": "{\n    \"title\": \"Cloud Event \",\n    \"description\": \"Experience music, dance, food, and crafts from around the world.\",\n    \"category\": [\"CULTURE\", \"FOOD\", \"DANCE\"],\n   \"date\": \"2025-12-02T23:08:00.000Z\",\n    \"location\": \"Dhaka Cultural Park\",\n    \"joiningFee\": 2000.0,\n    \"capacity\": 1\n  }\n",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/User/Desktop/486236-3840x2160-desktop-4k-blade-runner-2049-background-photo.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URL}}/host/create-event",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"host",
+								"create-event"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE-EVENT",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "data",
+									"value": "{\n  \"title\": \"Summer Music Festival\",\n  \"category\": [\"MUSIC\"],\n  \"description\": \"Join us for a fun-filled day of live music, food, and entertainment under the sun!\",\n  \"date\": \"2025-07-15T14:00:00.000Z\",\n  \"location\": \"Central Park, New York\",\n  \"joiningFee\": 25.00,\n  \"capacity\": 500,\n  \"hostId\" : \"1234566\"\n}\n",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/User/Desktop/486236-3840x2160-desktop-4k-blade-runner-2049-background-photo.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URL}}/host/event/0929cbf6-8673-46de-af7b-7acac4bc268c",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"host",
+								"event",
+								"0929cbf6-8673-46de-af7b-7acac4bc268c"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update-Event",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "data",
+									"value": "{\n\"title\": \"Corom Music Festival\"\n}",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/User/Desktop/586268905_766901863033805_3976092487301186671_n.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URL}}/host/event/a03ea7ef-75c5-454e-9631-85e41560a0d2",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"host",
+								"event",
+								"a03ea7ef-75c5-454e-9631-85e41560a0d2"
+							],
+							"query": [
+								{
+									"key": "data",
+									"value": null,
+									"disabled": true
+								},
+								{
+									"key": "file",
+									"value": null,
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SEE-MY-CREATED-EVENTS",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/host/my-hosted-events",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"host",
+								"my-hosted-events"
+							],
+							"query": [
+								{
+									"key": "category",
+									"value": "THEATER",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "complet-event",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/host/event-complete/f032ebf8-38e6-41ea-9cae-c1b633577bda",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"host",
+								"event-complete",
+								"f032ebf8-38e6-41ea-9cae-c1b633577bda"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "EVENT",
+			"item": [
+				{
+					"name": "GET-ALL-EVENTS-FOR-USER",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/event/all-events?category=MUSIC",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"event",
+								"all-events"
+							],
+							"query": [
+								{
+									"key": "searchTerm",
+									"value": "Music",
+									"disabled": true
+								},
+								{
+									"key": "date",
+									"value": "2025-12-19",
+									"disabled": true
+								},
+								{
+									"key": "category",
+									"value": "MUSIC"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET-SINGLE-EVENT",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/event/bad7cb68-ee94-4d75-b5f6-2a2c01f01ab0",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"event",
+								"bad7cb68-ee94-4d75-b5f6-2a2c01f01ab0"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "REJECTED",
+									"disabled": true
+								},
+								{
+									"key": "searchTerm",
+									"value": "CONCERT",
+									"disabled": true
+								},
+								{
+									"key": "title",
+									"value": "Corom",
+									"disabled": true
+								},
+								{
+									"key": "date",
+									"value": "2025-09-15",
+									"disabled": true
+								},
+								{
+									"key": "",
+									"value": null,
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "join-event",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/event/join/40302a1c-6406-4656-849d-2667ddb9c007",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"event",
+								"join",
+								"40302a1c-6406-4656-849d-2667ddb9c007"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "leave-event",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/event/leave/26d16a89-7952-4ef7-92b8-db5397ceffc4",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"event",
+								"leave",
+								"26d16a89-7952-4ef7-92b8-db5397ceffc4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get-My-Joined-Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/event/my-events?page=2",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"event",
+								"my-events"
+							],
+							"query": [
+								{
+									"key": "participantStatus",
+									"value": "CONFIRMED",
+									"disabled": true
+								},
+								{
+									"key": "searchTerm",
+									"value": "Sylhet Hills",
+									"disabled": true
+								},
+								{
+									"key": "date",
+									"value": "2025-12-01",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get-All-Participents-Of-An-Event",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/event/participants/bad7cb68-ee94-4d75-b5f6-2a2c01f01ab0",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"event",
+								"participants",
+								"bad7cb68-ee94-4d75-b5f6-2a2c01f01ab0"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "recent-events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/event/recent-events",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"event",
+								"recent-events"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "REVIEW",
+			"item": [
+				{
+					"name": "give-review",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"rating\": 5,\r\n    \"comment\": \"Khub Valo silo event ta\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/review/tran_1764669704044_318",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"review",
+								"tran_1764669704044_318"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-all-reviews",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"rating\": 5,\r\n    \"comment\": \"Khub Valo silo event ta\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{URL}}/review",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"review"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "META",
+			"item": [
+				{
+					"name": "meta",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/meta",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"meta"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "public-meta",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/meta/landing-page",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"meta",
+								"landing-page"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "PAYMENTS",
+			"item": [
+				{
+					"name": "get-all-payments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{URL}}/payment",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"payment"
+							],
+							"query": [
+								{
+									"key": "searchTerm",
+									"value": "Client-Ami",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "URL",
+			"value": ""
+		}
+	]
+}

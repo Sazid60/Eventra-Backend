@@ -105,22 +105,18 @@ const updateEvent = async (id: string, req: Request): Promise<Event> => {
 
     const updateData: any = { ...req.body };
 
-
     console.log(updateData)
 
-    if (req.body.category) {
-        if (req.body.category.length === 0) {
-            updateData.category = existingEvent.category;
+    // Handle category updates: replace completely with submitted values
+    if (req.body.category !== undefined) {
+        if (Array.isArray(req.body.category) && req.body.category.length > 0) {
+            // Replace with new categories provided
+            updateData.category = req.body.category;
         } else {
-            const merged = Array.from(
-                new Set([...existingEvent.category, ...req.body.category])
-            );
-
-            updateData.category = merged;
+            // If empty array submitted, keep existing categories
+            updateData.category = existingEvent.category;
         }
     }
-
-
 
     try {
         if (newImageUrl) {

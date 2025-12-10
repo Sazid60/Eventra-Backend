@@ -17,7 +17,7 @@ router.get(
 
 router.get(
     '/me',
-    auth( UserRole.ADMIN, UserRole.CLIENT, UserRole.HOST),
+    auth(UserRole.ADMIN, UserRole.CLIENT, UserRole.HOST),
     userController.getMyProfile
 )
 
@@ -30,6 +30,11 @@ router.patch(
         return userController.updateMyProfile(req, res, next)
     }
 );
+
+router.post(
+    '/send-email',
+    userController.sendContactEmail
+)
 
 
 
@@ -44,7 +49,7 @@ router.post(
 
 router.patch(
     '/:id/status',
-    auth( UserRole.ADMIN),
+    auth(UserRole.ADMIN),
     validateRequest(userValidation.updateStatus),
     userController.changeProfileStatus
 );

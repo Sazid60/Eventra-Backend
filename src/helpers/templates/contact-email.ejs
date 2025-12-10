@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Form Submission</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 30px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .email-header {
+            background: linear-gradient(135deg, #45aaa2 0%, #3c8f88 100%);
+            padding: 30px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .email-header p {
+            margin: 10px 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .email-body {
+            padding: 30px;
+            color: #333333;
+        }
+        .email-body h2 {
+            color: #45aaa2;
+            font-size: 20px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #45aaa2;
+            padding-bottom: 10px;
+        }
+        .info-row {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #45aaa2;
+            border-radius: 4px;
+        }
+        .info-row label {
+            display: block;
+            font-weight: 600;
+            color: #555555;
+            margin-bottom: 5px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-row p {
+            margin: 0;
+            color: #333333;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .message-box {
+            background-color: #f0f8f7;
+            border: 1px solid #d0e8e5;
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .message-box label {
+            display: block;
+            font-weight: 600;
+            color: #45aaa2;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .message-box p {
+            margin: 0;
+            color: #333333;
+            font-size: 15px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+        .email-footer {
+            background-color: #f8f8f8;
+            padding: 20px 30px;
+            text-align: center;
+            color: #888888;
+            font-size: 12px;
+            border-top: 1px solid #eeeeee;
+        }
+        .email-footer p {
+            margin: 5px 0;
+        }
+        .divider {
+            height: 1px;
+            background-color: #eeeeee;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            <h1>New Contact Form Submission</h1>
+            <p>You have received a new message from your website</p>
+        </div>
+
+        <!-- Body -->
+        <div class="email-body">
+            <h2>Contact Information</h2>
+            
+            <div class="info-row">
+                <label>Full Name</label>
+                <p><%= name %></p>
+            </div>
+
+            <div class="info-row">
+                <label>Email Address</label>
+                <p><a href="mailto:<%= email %>" style="color: #45aaa2; text-decoration: none;"><%= email %></a></p>
+            </div>
+
+            <div class="info-row">
+                <label>Contact Number</label>
+                <p><%= contactNumber %></p>
+            </div>
+
+            <div class="info-row">
+                <label>Subject</label>
+                <p><strong><%= subject %></strong></p>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="message-box">
+                <label>Message</label>
+                <p><%= message %></p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <p><strong>Eventra</strong> - Event Management Platform</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>&copy; <%= new Date().getFullYear() %> Eventra. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -12,7 +12,7 @@ app.use(cookieParser());
 
 
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: 'https://eventra-frontend-neon.vercel.app',
     credentials: true
 }));
 

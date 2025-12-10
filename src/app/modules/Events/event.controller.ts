@@ -23,7 +23,7 @@ const getAllEvents = catchAsync(async (req: Request & { user?: any }, res: Respo
             accessToken,
             config.jwt.jwt_secret
         );
-    } else{
+    } else {
         user = null;
     }
 
@@ -119,11 +119,23 @@ const getMyEvents = catchAsync(async (req: Request & { user?: any }, res: Respon
     });
 });
 
+const getRecentEvents = catchAsync(async (req: Request, res: Response) => {
+    const result = await eventService.getRecentEvents();
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Recent 6 events retrieved successfully",
+        data: result
+    });
+});
+
 export const eventController = {
     getAllEvents,
     getSingleEvent,
     joinEvent,
     leaveEvent,
     getMyEvents,
-    getEventsParticipants
+    getEventsParticipants,
+    getRecentEvents
 };

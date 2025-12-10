@@ -19,6 +19,18 @@ const createReview = catchAsync(async (req: Request & { user?: any }, res: Respo
     });
 });
 
+const getLatestReviews = catchAsync(async (req: Request, res: Response) => {
+    const result = await reviewService.getLatestReviews();
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Latest 20 reviews retrieved successfully',
+        data: result
+    });
+});
+
 export const reviewController = {
     createReview,
+    getLatestReviews
 };

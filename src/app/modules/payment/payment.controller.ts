@@ -4,6 +4,9 @@ import config from "../../../config";
 import { paymentServices } from "./payment.service";
 import { sendResponse } from "../../../shared/sendResponse";
 import { SSLService } from "../sslCommerz/sslCommerz.service";
+import pick from "../../../shared/pick";
+import { paymentFilterableFields } from "./payment.constant";
+import httpStatus from "http-status";
 
 
 
@@ -45,10 +48,24 @@ const validatePayment = catchAsync(
     }
 );
 
+const getUserPayments = catchAsync(async (req: Request & { user?: any }, res: Response) => {
+    const filters = pick(req.query, paymentFilterableFields);
+    const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
+
+    const result = await paymentServices.getUserPayments(filters, options, req.user);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "User payments retrieved successfully",
+        data: result
+    });
+});
 
 export const PaymentController = {
     successPayment,
     failPayment,
     cancelPayment,
-    validatePayment
+    validatePayment,
+    getUserPayments
 };
