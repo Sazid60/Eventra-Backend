@@ -43,25 +43,25 @@ Eventra is a full-featured backend for creating, discovering, joining, and manag
 
 ### Validation & Serialization
 
-- **Zod :**Schema validation for requests/payloads
+- **Zod :** Schema validation for requests/payloads
 - **uuid :** Unique ID generation
 
 ### File Handling & Cloud Storage
 
-- **Multer :**Multipart form data file upload middleware
+- **Multer :** Multipart form data file upload middleware
 - **multer-storage-cloudinary :** Cloudinary storage adapter for Multer
-- **Cloudinary :**Cloud image storage and optimization
+- **Cloudinary :** Cloud image storage and optimization
 
 ### Email & Templating
 
 - **nodemailer :** Email delivery (SMTP)
-- **EJS :**Email template rendering
+- **EJS :** Email template rendering
 
 ### HTTP & Network
 
 - **Axios :** HTTP client (SSLCommerz API calls)
 - **CORS :.** Cross-Origin Resource Sharing middleware
-- **http-status :**HTTP status code utilities
+- **http-status :** HTTP status code utilities
 - **http-status-codes :** Alternative HTTP status constants
 
 ### Middleware & Rate Limiting
