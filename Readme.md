@@ -4,7 +4,7 @@
 
 #### Frontend: [eventra-frontend-neon.vercel.app](https://eventra-frontend-neon.vercel.app)
 
-#### Frontend-Repository: []()
+#### Frontend-Repository: [https://github.com/Sazid60/Eventra-Frontend.git](https://github.com/Sazid60/Eventra-Frontend.git)
 
 #### Demo Video:
 

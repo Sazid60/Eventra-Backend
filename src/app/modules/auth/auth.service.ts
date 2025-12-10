@@ -112,15 +112,15 @@ const forgotPassword = async (payload: { email: string }) => {
 
     const resetPassLink = config.reset_pass_link + `?userId=${userData.id}&token=${resetPassToken}`
 
-    // await sendEmail({
-    //     to: userData.email,
-    //     subject: "Password Reset Request",
-    //     templateName: "reset-password",
-    //     templateData: {
-    //         name: userData.email.split("@")[0],
-    //         resetPassLink,
-    //     }
-    // });
+    await sendEmail({
+        to: userData.email,
+        subject: "Password Reset Request",
+        templateName: "reset-password",
+        templateData: {
+            name: userData.email.split("@")[0],
+            resetPassLink,
+        }
+    });
 };
 
 const resetPassword = async (token: string, payload: { id: string, password: string }) => {
@@ -301,15 +301,15 @@ const applyHost = async (user: any) => {
             }
         });
 
-        // await sendEmail({
-        //     to: userData.email,
-        //     subject: "Your Host Application Submitted",
-        //     templateName: "host-application-submitted",
-        //     templateData: {
-        //         name: clientData ? clientData.name : userData.email.split("@")[0],
-        //         applicationId: application.id,
-        //     }
-        // });
+        await sendEmail({
+            to: userData.email,
+            subject: "Your Host Application Submitted",
+            templateName: "host-application-submitted",
+            templateData: {
+                name: clientData ? clientData.name : userData.email.split("@")[0],
+                applicationId: application.id,
+            }
+        });
 
         return { ...application, ...userUpdate };
     });

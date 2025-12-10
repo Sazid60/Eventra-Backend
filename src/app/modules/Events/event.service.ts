@@ -126,7 +126,7 @@ const getAllEvents = async (params: any, options: IPaginationOptions, user: any)
 
             return {
                 meta: { page, limit, total },
-                allEvents: orderedEvents
+                eventRequests: orderedEvents
             };
         }
     }

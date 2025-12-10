@@ -7,6 +7,7 @@ import { paginationHelper } from "../../../helpers/paginationHelper";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { eventSearchableFields, clientSearchableFields, hostProfileSearchableFields, hostSearchableFields } from "./admin.constant";
 import prisma from "../../../shared/prisma";
+import { sendEmail } from "../../../helpers/sendEmail";
 
 
 const getAllHostApplications = async (params: any, options: IPaginationOptions) => {
@@ -352,14 +353,14 @@ const approveHostApplication = async (id: string) => {
         });
         
 
-        // await sendEmail({
-        //     to: newHost.email,
-        //     subject: "Congratulations! Your Host Application Approved",
-        //     templateName: "host-application-approved",
-        //     templateData: {
-        //         name: newHost.name,
-        //     }
-        // });
+        await sendEmail({
+            to: newHost.email,
+            subject: "Congratulations! Your Host Application Approved",
+            templateName: "host-application-approved",
+            templateData: {
+                name: newHost.name,
+            }
+        });
         
 
         return {
@@ -414,14 +415,14 @@ const rejectHostApplication = async (id: string) => {
         };
     });
 
-    // await sendEmail({
-    //     to: existingClientInfo.email,
-    //     subject: "Host Application Status Update",
-    //     templateName: "host-application-rejected",
-    //     templateData: {
-    //         name: existingClientInfo.name || "User",
-    //     }
-    // });
+    await sendEmail({
+        to: existingClientInfo.email,
+        subject: "Host Application Status Update",
+        templateName: "host-application-rejected",
+        templateData: {
+            name: existingClientInfo.name || "User",
+        }
+    });
 
     return result;
 };
@@ -446,14 +447,14 @@ const approveEventIntoDB = async (id: string) => {
         data: { status: EventStatus.OPEN }
     });
 
-    // await sendEmail({
-    //     to: result.host.email,
-    //     subject: "Event Application Approval Update",
-    //     templateName: "event-application-approved",
-    //     templateData: {
-    //         name: result.host.name,
-    //     }
-    // });
+    await sendEmail({
+        to: result.host.email,
+        subject: "Event Application Approval Update",
+        templateName: "event-application-approved",
+        templateData: {
+            name: result.host.name,
+        }
+    });
 
     return result;
 };
@@ -480,14 +481,14 @@ const rejectEvent = async (id: string) => {
         data: { status: EventStatus.REJECTED }
     });
 
-    // await sendEmail({
-    //     to: result.host.email,
-    //     subject: "Event Application Rejected",
-    //     templateName: "event-application-rejected",
-    //     templateData: {
-    //         name: result.host.name,
-    //     }
-    // });
+    await sendEmail({
+        to: result.host.email,
+        subject: "Event Application Rejected",
+        templateName: "event-application-rejected",
+        templateData: {
+            name: result.host.name,
+        }
+    });
     return result;
 }
 
