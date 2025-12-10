@@ -21,6 +21,18 @@ const fetchDashboardMetaData = catchAsync(async (req: Request, res: Response) =>
     })
 });
 
+const getLandingPageStats = catchAsync(async (req: Request, res: Response) => {
+    const result = await MetaService.getLandingPageStats();
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: result.message,
+        data: result.stats
+    })
+});
+
 export const MetaController = {
-    fetchDashboardMetaData
+    fetchDashboardMetaData,
+    getLandingPageStats
 }

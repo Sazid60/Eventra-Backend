@@ -16,6 +16,11 @@ router.get(
     eventController.getAllEvents
 );
 
+router.get(
+    '/recent-events',
+    eventController.getRecentEvents
+);
+
 
 // get my events 
 router.get(

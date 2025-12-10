@@ -37,15 +37,15 @@ const createReview = async (transactionId: string, user: any, payload: CreateRev
         where: { email: user.email }
     })
 
-    if(!client){
+    if (!client) {
         throw new Error("Client Info not found");
     }
 
     // ensure the requesting user is the same client who paid
     if (!user || !client.id) throw new Error('Unauthorized');
 
-    
-    
+
+
     if (payment.clientId !== client.id) throw new Error('You can only review events you purchased');
 
     const eventId = payment.eventId;
@@ -88,6 +88,21 @@ const createReview = async (transactionId: string, user: any, payload: CreateRev
     return result;
 }
 
+// Get latest 20 reviews - NO search, NO sort, NO pagination
+const getLatestReviews = async () => {
+    const result = await prisma.review.findMany({
+        take: 20,
+        orderBy: { createdAt: 'desc' },
+        include: {
+            client: { select: { id: true, name: true, email: true, profilePhoto: true } },
+            event: { select: { id: true, title: true } }
+        }
+    });
+
+    return result;
+};
+
 export const reviewService = {
     createReview,
+    getLatestReviews
 };

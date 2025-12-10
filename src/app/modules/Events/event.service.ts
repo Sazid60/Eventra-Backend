@@ -203,6 +203,9 @@ const getMyEvents = async (user: any, params: any, options: IPaginationOptions) 
         });
     }
 
+
+
+
     // Final query
     const result = await prisma.eventParticipant.findMany({
         where: {
@@ -221,11 +224,20 @@ const getMyEvents = async (user: any, params: any, options: IPaginationOptions) 
             : { createdAt: "desc" }
     });
 
+    // Count total matching records based on the same conditions
+    const total = await prisma.eventParticipant.count({
+        where: {
+            clientId,
+            ...(participantStatus && { participantStatus }),
+            ...(eventFilters.length > 0 && { event: { AND: eventFilters } }),
+        },
+    });
+
     return {
         meta: {
             page,
             limit,
-            total: result.length,
+            total,
         },
         data: result
     };
@@ -311,8 +323,8 @@ const getEventsParticipants = async (eventId: string) => {
 
     const participantsWithReviewStatus = result.map(participant => ({
         ...participant,
-        hasReviewed: !!participant.review,  
-        review: undefined,  
+        hasReviewed: !!participant.review,
+        review: undefined,
     }));
 
     return {
@@ -514,6 +526,26 @@ export const completeEvent = async (eventId: string, user: any) => {
 
     return updated;
 }
+
+
+const getRecentEvents = async () => {
+    const now = new Date();
+
+    const result = await prisma.event.findMany({
+        where: {
+            status: EventStatus.OPEN,
+            date: { gte: now }
+        },
+        take: 6,
+        orderBy: { createdAt: 'desc' },
+        include: {
+            host: { select: { id: true, name: true, email: true, profilePhoto: true, rating: true } }
+        }
+    });
+
+    return result;
+};
+
 export const eventService = {
     getAllEvents,
     getSingleEvent,
@@ -521,5 +553,6 @@ export const eventService = {
     leaveEvent,
     getMyEvents,
     completeEvent,
-    getEventsParticipants
+    getEventsParticipants,
+    getRecentEvents
 };

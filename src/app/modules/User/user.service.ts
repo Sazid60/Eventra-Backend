@@ -8,6 +8,7 @@ import { IAuthUser } from "../../interfaces/common";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { userSearchAbleFields } from "./user.constant";
 import { deleteImageFromCloudinary } from "../../../config/cloudinary.config";
+import { sendEmail } from "../../../helpers/sendEmail";
 
 
 
@@ -18,6 +19,15 @@ const createClient = async (req: Request): Promise<Client> => {
 
     imageUrl = req.file?.path || "";
 
+    // Check if user with this email already exists
+    const existingUser = await prisma.user.findUnique({
+        where: { email: req.body.client.email }
+    });
+
+    if (existingUser) {
+        if (imageUrl) await deleteImageFromCloudinary(imageUrl);
+        throw new Error("User with this email already exists");
+    }
 
     const hashedPassword: string = await bcrypt.hash(req.body.password, Number(config.salt_round))
 
@@ -257,7 +267,7 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
                 where: { email: userInfo.email },
             });
 
-            if(!existingClient){
+            if (!existingClient) {
                 throw new Error('Client not found');
             }
 
@@ -265,16 +275,14 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
                 await deleteImageFromCloudinary(existingClient?.profilePhoto);
             }
 
-            // Handle interests merging
-            if (req.body?.interests) {
-                const oldInterests = existingClient?.interests || [];
-
-                if (req.body.interests.length === 0) {
-                    req.body.interests = oldInterests;
+            // Handle interests replacement: replace completely with submitted values
+            if (req.body?.interests !== undefined) {
+                if (Array.isArray(req.body.interests) && req.body.interests.length > 0) {
+                    // Replace with new interests provided
+                    req.body.interests = req.body.interests;
                 } else {
-                    req.body.interests = Array.from(
-                        new Set([...oldInterests, ...req.body.interests])
-                    );
+                    // If empty array submitted, keep existing interests
+                    req.body.interests = existingClient?.interests || [];
                 }
             }
 
@@ -301,10 +309,31 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
 
 
 
+const sendContactEmail = async (payload: { name: string; email: string; contactNumber: string; subject: string; message: string }) => {
+    const { name, email, contactNumber, subject, message } = payload;
+
+    // Send email to admin
+    await sendEmail({
+        to: config.admin_email,
+        subject: `Contact Form: ${subject}`,
+        templateName: 'contact-email',
+        templateData: {
+            name,
+            email,
+            contactNumber,
+            subject,
+            message,
+        },
+    });
+
+    return { message: 'Contact email sent successfully' };
+};
+
 export const userService = {
     createClient,
     getAllFromDB,
     changeProfileStatus,
     getMyProfile,
-    updateMyProfile
+    updateMyProfile,
+    sendContactEmail
 }

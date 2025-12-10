@@ -80,10 +80,22 @@ const updateMyProfile = catchAsync(async (req: Request , res: Response) => {
 });
 
 
+const sendContactEmail = catchAsync(async (req: Request, res: Response) => {
+    const result = await userService.sendContactEmail(req.body);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Contact email sent successfully!",
+        data: result
+    });
+});
+
 export const userController = {
     getAllFromDB,
     changeProfileStatus,
     getMyProfile,
     updateMyProfile,
-    createClient
+    createClient,
+    sendContactEmail
 }
