@@ -8,7 +8,7 @@
 
 #### Demo Video:
 
-Eventra is a full-featured backend for creating, discovering, joining, and managing events with a sophisticated event ecosystem. It supports three distinct roles (Admin, Host, Client) with fine-grained access controls, secure SSLCommerz payment processing, peer-to-peer reviews with host rating aggregation, comprehensive analytics dashboards, and multi-template email notifications. Features interest-based event personalization, real-time capacity management, transactional integrity for payments and bookings, and admin-driven approval workflows for hosts and events. Built with TypeScript, Prisma/PostgreSQL, and modern Node.js best practices.
+Eventra is a full-featured backend for creating, discovering(mind like events), joining, and managing events with a sophisticated event ecosystem. It supports three distinct roles (Admin, Host, Client) with fine-grained access controls, secure SSLCommerz payment processing, peer-to-peer reviews with host rating aggregation, event income separation 10% admin and 90% host, comprehensive analytics dashboards,  all user management, all host management, host/ event application management and multi-template email notifications. Features interest-based event personalization, real-time event management, transactional integrity for payments and bookings, and admin-driven approval workflows for hosts and events. Built with TypeScript, Prisma/PostgreSQL, and modern Node.js best practices.
 
 ---
 
@@ -116,6 +116,8 @@ Eventra is a full-featured backend for creating, discovering, joining, and manag
 
 - Join event initiates payment; stores transactionId; links participant, event, host, client.
 - Success/fail/cancel IPN handlers update PaymentStatus and event capacity/status accordingly.
+- **Revenue Sharing Model**: Automatic 90/10 split on successful payments (90% to host, 10% platform fee to admin).
+- Income tracking: Host and Admin models maintain cumulative `income` fields updated transactionally.
 - Role-based visibility: Admin sees all payments; Host sees payments for own events.
 - Search/pagination/sort on payments (transactionId, client name, status).
 
@@ -250,7 +252,7 @@ SSL_CANCEL_FRONTEND_URL=
 ## Setup & Run Locally
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/Sazid60/Eventra-Backend.git
 cd Backend
 npm install
 npx prisma generate
@@ -266,10 +268,22 @@ npm run dev
 
 ---
 
-## Admin / Seed Credentials
+## Credentials for Testing
 
-- Admin email: `admin@gmail.com`
-- Admin password: `Admin@12345`
+##### Admin Login
+
+- _Admin Email_: admin@gmail.com
+- _Admin Password_: Admin123@
+
+##### Host Login
+
+- _Host Email_: host@gmail.com
+- _Host Password_: Host123@
+
+##### Client Login
+
+- _Client Email_: client@gmail.com
+- _Client Password_: Client123@
 
 ---
 
