@@ -6,7 +6,7 @@
 
 #### Frontend-Repository: [https://github.com/Sazid60/Eventra-Frontend.git](https://github.com/Sazid60/Eventra-Frontend.git)
 
-#### Demo Video:
+#### Demo Video: [Video_link](https://drive.google.com/file/d/1eeQLkki_Evg1nFA_3IS3wPqMEEpBY5z9/view)
 
 Eventra is a full-featured backend for creating, discovering(mind like events), joining, and managing events with a sophisticated event ecosystem. It supports three distinct roles (Admin, Host, Client) with fine-grained access controls, secure SSLCommerz payment processing, peer-to-peer reviews with host rating aggregation, event income separation 10% admin and 90% host, comprehensive analytics dashboards,  all user management, all host management, host/ event application management and multi-template email notifications. Features interest-based event personalization, real-time event management, transactional integrity for payments and bookings, and admin-driven approval workflows for hosts and events. Built with TypeScript, Prisma/PostgreSQL, and modern Node.js best practices.
 
@@ -264,7 +264,7 @@ npm run dev
 
 - `npm run dev` – start in watch mode
 - `npm run build` – compile TypeScript
-- `npm run lint` – run ESLint
+
 
 ---
 
