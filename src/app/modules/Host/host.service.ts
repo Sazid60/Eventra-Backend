@@ -130,13 +130,13 @@ const updateEvent = async (id: string, req: Request): Promise<Event> => {
 
     console.log(updateData)
 
-    // Handle category updates: replace completely with submitted values
+
     if (req.body.category !== undefined) {
         if (Array.isArray(req.body.category) && req.body.category.length > 0) {
-            // Replace with new categories provided
+
             updateData.category = req.body.category;
         } else {
-            // If empty array submitted, keep existing categories
+
             updateData.category = existingEvent.category;
         }
     }
@@ -294,19 +294,19 @@ const completeEvent = async (id: string) => {
     if (userInfo?.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
 
 
-    // Only allow completion when status is OPEN or FULL
+
     if (!(isEventExist.status === EventStatus.OPEN || isEventExist.status === EventStatus.FULL)) {
         throw new Error('Only events with status OPEN or FULL can be marked completed');
     }
 
-    // Ensure current time is same or after event date/time
+
     const now = new Date();
     const eventDate = new Date(isEventExist.date);
     if (now.getTime() < eventDate.getTime()) {
         throw new Error('Event date/time has not occurred yet');
     }
 
-    // mark as COMPLETED
+ 
     const updated = await prisma.event.update({
         where: { id },
         include: { host: true },

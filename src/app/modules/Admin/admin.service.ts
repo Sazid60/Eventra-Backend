@@ -153,15 +153,12 @@ const getAllHosts = async (params: any, options: IPaginationOptions) => {
 
     const andConditions: Prisma.UserWhereInput[] = [];
 
-    // must be HOST
     andConditions.push({ role: UserRole.HOST });
 
-    // ensure only users who actually have a host profile
     andConditions.push({
         host: { isNot: null }
     });
 
-    // globally searchable fields (User.email + Client.name + Client.contactNumber)
     if (searchTerm) {
         andConditions.push({
             OR: [
@@ -171,12 +168,11 @@ const getAllHosts = async (params: any, options: IPaginationOptions) => {
         });
     }
 
-    // status filter applies to User.status
+
     if (status) {
         andConditions.push({ status: status as UserStatus });
     }
 
-    // dynamic filtering for other fields
     if (Object.keys(filterData).length > 0) {
         const extraFilters: Prisma.UserWhereInput[] = [];
 
@@ -184,12 +180,10 @@ const getAllHosts = async (params: any, options: IPaginationOptions) => {
             const value = (filterData as any)[key];
 
             if (hostProfileSearchableFields.includes(key)) {
-                // apply filter on nested client field
                 extraFilters.push({
                     host: { [key]: { equals: value } }
                 });
             } else {
-                // filter on user field
                 extraFilters.push({
                     [key]: { equals: value }
                 });
@@ -288,7 +282,6 @@ const getAllEventApplications = async (params: any, options: IPaginationOptions)
     };
 };
 
-// approve event
 
 
 // approve host application
@@ -318,13 +311,11 @@ const approveHostApplication = async (id: string) => {
 
     const result = await prisma.$transaction(async (tx) => {
 
-        // 1. Update host application status
         await tx.hostApplication.update({
             where: { id },
             data: { status: HostApplicationStatus.APPROVED }
         });
 
-        // 2. Update user role & status
         await tx.user.update({
             where: { id: isHostApplicationExist.userId },
             data: {
@@ -333,13 +324,11 @@ const approveHostApplication = async (id: string) => {
             }
         });
 
-        // 3. Soft delete client info
         await tx.client.update({
             where: { email: existingClientInfo.email },
             data: { isDeleted: true }
         });
 
-        // 4. Create host profile
         const newHost = await tx.host.create({
             data: {
                 name: existingClientInfo.name,

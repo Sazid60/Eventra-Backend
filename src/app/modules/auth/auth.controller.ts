@@ -12,11 +12,11 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 
     const accessTokenMaxAge = convertExpiresInToMs(
         config.jwt.expires_in,
-        1000 * 60 * 60 // default 1 hour
+        1000 * 60 * 60 
     );
     const refreshTokenMaxAge = convertExpiresInToMs(
         config.jwt.refresh_token_expires_in,
-        1000 * 60 * 60 * 24 * 30 // default 30 days
+        1000 * 60 * 60 * 24 * 30 
     );
     const result = await AuthServices.loginUser(req.body)
 
@@ -44,11 +44,11 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
 
     const accessTokenMaxAge = convertExpiresInToMs(
         config.jwt.expires_in,
-        1000 * 60 * 60 // default 1 hour
+        1000 * 60 * 60 
     );
     const refreshTokenMaxAge = convertExpiresInToMs(
         config.jwt.refresh_token_expires_in,
-        1000 * 60 * 60 * 24 * 30 // default 30 days
+        1000 * 60 * 60 * 24 * 30 
     );
 
     const result = await AuthServices.refreshToken(refreshToken);

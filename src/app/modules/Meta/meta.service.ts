@@ -111,7 +111,7 @@ const fetchDashboardMetaData = async (user: JwtPayload) => {
     throw new Error("Dashboard not available for this user role");
 };
 
-// Get common stats for landing page (public endpoint)
+
 const getLandingPageStats = async () => {
     const [
         totalEvents,

@@ -34,14 +34,14 @@ import { sendEmail } from "../../../helpers/sendEmail";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 
-// Handle successful payment callback
+
 const successPayment = async (query: Record<string, string>) => {
     try {
-        // Log the entire query for debugging
+
         console.log("=== PAYMENT SUCCESS CALLBACK ===");
         console.log("Full query object:", JSON.stringify(query));
 
-        // Extract transactionId from query (SSLCommerz may use different key names)
+
         const transactionId = query.transactionId || query.tran_id || query.txnId || query.transaction_id;
         console.log("Extracted transactionId:", transactionId);
 
@@ -50,7 +50,7 @@ const successPayment = async (query: Record<string, string>) => {
             throw new Error("transactionId is required in payment callback");
         }
 
-        // Fetch payment details
+
         const payment = await prisma.payment.findUnique({
             where: { transactionId },
             select: {
@@ -90,16 +90,16 @@ const successPayment = async (query: Record<string, string>) => {
 
         console.log("Payment found. Current status:", payment.paymentStatus);
 
-        // Idempotency: if already processed as PAID, return immediately
+
         if (payment.paymentStatus === PaymentStatus.PAID) {
             console.log("Payment already processed, skipping");
             return { success: true, message: 'Payment already processed', payment };
         }
 
-        // Execute payment confirmation in a transaction (BOTH payment & participant update together)
+
         console.log("Starting transaction...");
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Mark payment as PAID
+
             console.log("Updating payment to PAID...");
             const updatedPayment = await tx.payment.update({
                 where: { id: payment.id },
@@ -107,7 +107,7 @@ const successPayment = async (query: Record<string, string>) => {
             });
             console.log("Payment updated successfully");
 
-            // 2. Update participant status to CONFIRMED (use transactionId which is @unique)
+
             console.log("Updating participant to CONFIRMED with transactionId:", transactionId);
             const updatedParticipant = await tx.eventParticipant.update({
                 where: { transactionId },
@@ -183,20 +183,20 @@ const failPayment = async (query: Record<string, string>) => {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-        // 1. Mark payment as CANCELLED
+
         const updatedPayment = await tx.payment.update({ where: { id: payment.id }, data: { paymentStatus: PaymentStatus.CANCELLED } });
 
-        // 2. Update participant status to LEFT (if exists) and release reserved seat
+
         if (payment.participantId) {
             const participant = await tx.eventParticipant.findUnique({ where: { id: payment.participantId }, select: { id: true, participantStatus: true, eventId: true } });
             if (participant && participant.participantStatus !== ParticipantStatus.LEFT) {
                 await tx.eventParticipant.update({ where: { id: participant.id }, data: { participantStatus: ParticipantStatus.LEFT } });
 
-                // 3. Increase event capacity by 1 (release reserved seat)
+
                 const event = await tx.event.findUnique({ where: { id: participant.eventId }, select: { id: true, capacity: true, status: true } });
                 if (event) {
                     await tx.event.update({ where: { id: event.id }, data: { capacity: event.capacity + 1 } });
-                    // 4. if event status is FULL change to OPEN
+
                     if (event.status === EventStatus.FULL) {
                         await tx.event.update({ where: { id: event.id }, data: { status: EventStatus.OPEN } });
                     }
@@ -210,25 +210,25 @@ const failPayment = async (query: Record<string, string>) => {
     return result;
 }
 
-// Handle cancelled/refunded payment by user
+
 const cancelPayment = async (query: Record<string, string>) => {
-    // Use same flow as failPayment but mark as CANCELLED (or REFUNDED if you prefer)
+
     const transactionId = query.transactionId || query.txnId || query.transaction_id;
     if (!transactionId) throw new Error("transactionId is required");
 
     const payment = await prisma.payment.findUnique({ where: { transactionId } });
     if (!payment) throw new Error("Payment not found");
 
-    // Idempotency check
+
     if (payment.paymentStatus === PaymentStatus.CANCELLED || payment.paymentStatus === PaymentStatus.REFUNDED) {
         return { success: true, message: 'Payment already cancelled', payment };
     }
 
     const result = await prisma.$transaction(async (tx) => {
-        // mark payment as CANCELLED (if refunded, use PaymentStatus.REFUNDED)
+
         const updatedPayment = await tx.payment.update({ where: { id: payment.id }, data: { paymentStatus: PaymentStatus.CANCELLED } });
 
-        // update participant to LEFT and release reserved seat
+
         if (payment.participantId) {
             const participant = await tx.eventParticipant.findUnique({ where: { id: payment.participantId }, select: { id: true, participantStatus: true, eventId: true } });
             if (participant && participant.participantStatus !== ParticipantStatus.LEFT) {
@@ -250,18 +250,15 @@ const cancelPayment = async (query: Record<string, string>) => {
     return result;
 };
 
-// Get user-specific payments with search and pagination
-// Admin sees all payments, Host sees only his created events' payments
-// Search by: transactionId and client name
+
 const getUserPayments = async (params: any, options: IPaginationOptions, user: any) => {
     const { page, limit, skip } = paginationHelper.calculatePagination(options);
     const { searchTerm, paymentStatus, ...filterData } = params;
 
     const andConditions: Prisma.PaymentWhereInput[] = [];
 
-    // Filter based on user role
+
     if (user.role === UserRole.HOST) {
-        // Host: find his host profile first, then filter payments for his events
         const host = await prisma.host.findUnique({
             where: { email: user.email },
             select: { id: true }
@@ -273,9 +270,7 @@ const getUserPayments = async (params: any, options: IPaginationOptions, user: a
             hostId: host.id
         });
     }
-    // ADMIN sees all payments (no additional filter)
 
-    // Search by transactionId or client name
     if (searchTerm) {
         andConditions.push({
             OR: [
@@ -285,12 +280,11 @@ const getUserPayments = async (params: any, options: IPaginationOptions, user: a
         });
     }
 
-    // Filter by payment status
     if (paymentStatus) {
         andConditions.push({ paymentStatus: paymentStatus as PaymentStatus });
     }
 
-    // Additional dynamic filters
+
     if (Object.keys(filterData).length > 0) {
         andConditions.push({
             AND: Object.keys(filterData).map(key => ({
