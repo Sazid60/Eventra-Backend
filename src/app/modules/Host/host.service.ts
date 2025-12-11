@@ -36,6 +36,8 @@ const createEvent = async (req: Request): Promise<Event> => {
         throw new Error("User not found");
     }
 
+    if (userData.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
+
 
     try {
         const result = await prisma.$transaction(async (transactionClient) => {
@@ -60,12 +62,24 @@ const createEvent = async (req: Request): Promise<Event> => {
 };
 
 const deleteEvent = async (id: string): Promise<Event> => {
+
     const isEventExist = await prisma.event.findUnique({
-        where: { id }
+        where: { id },
+        include: { host: true }
     });
+
     if (!isEventExist) {
         throw new Error("Event not found!");
     }
+
+
+    const userInfo = await prisma.user.findUnique({
+        where: { email: isEventExist?.host.email }
+    });
+
+    if (userInfo?.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
+
+
 
     if (
         isEventExist.status !== EventStatus.CANCELLED &&
@@ -83,12 +97,21 @@ const deleteEvent = async (id: string): Promise<Event> => {
 const updateEvent = async (id: string, req: Request): Promise<Event> => {
     let newImageUrl = "";
     const existingEvent = await prisma.event.findUnique({
-        where: { id }
+        where: { id },
+        include: { host: true }
     });
 
     if (!existingEvent) {
         throw new Error("Event not found!");
     }
+
+
+    const userInfo = await prisma.user.findUnique({
+        where: { email: existingEvent?.host.email }
+    });
+
+    if (userInfo?.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
+
 
     if (
         existingEvent.status === EventStatus.CANCELLED ||
@@ -137,7 +160,8 @@ const updateEvent = async (id: string, req: Request): Promise<Event> => {
 
 const cancelEvent = async (id: string) => {
     const isEventExist = await prisma.event.findUniqueOrThrow({
-        where: { id }
+        where: { id },
+        include: { host: true }
     });
 
     console.log(isEventExist)
@@ -145,6 +169,13 @@ const cancelEvent = async (id: string) => {
     if (!isEventExist) {
         throw new Error("Event not found!");
     }
+
+    const userInfo = await prisma.user.findUnique({
+        where: { email: isEventExist?.host.email }
+    });
+
+    if (userInfo?.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
+
 
     if (isEventExist.status !== 'PENDING') {
         throw new Error("Only PENDING events can be canceled.");
@@ -255,6 +286,13 @@ const completeEvent = async (id: string) => {
     if (!isEventExist) {
         throw new Error('Event not found');
     }
+
+    const userInfo = await prisma.user.findUnique({
+        where: { email: isEventExist?.host.email }
+    });
+
+    if (userInfo?.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
+
 
     // Only allow completion when status is OPEN or FULL
     if (!(isEventExist.status === EventStatus.OPEN || isEventExist.status === EventStatus.FULL)) {

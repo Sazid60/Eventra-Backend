@@ -41,6 +41,13 @@ const createReview = async (transactionId: string, user: any, payload: CreateRev
         throw new Error("Client Info not found");
     }
 
+    const userInfo = await prisma.user.findUnique({
+        where: { email: user.email }
+    });
+
+    if (userInfo?.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
+
+
     // ensure the requesting user is the same client who paid
     if (!user || !client.id) throw new Error('Unauthorized');
 

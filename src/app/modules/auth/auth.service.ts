@@ -226,8 +226,7 @@ const getMe = async (user: any) => {
 
     const userData = await prisma.user.findUniqueOrThrow({
         where: {
-            email: decodedData.email,
-            status: UserStatus.ACTIVE,
+            email: decodedData.email
         },
         select: {
             id: true,
@@ -266,6 +265,10 @@ const applyHost = async (user: any) => {
 
     if (!userData) {
         throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    if(userData.status === UserStatus.SUSPENDED) {
+        throw new ApiError(httpStatus.FORBIDDEN, "Your account has been suspended. You cannot perform this operation.");
     }
 
     if (!userData.client) {

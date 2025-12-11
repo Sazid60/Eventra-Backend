@@ -339,8 +339,8 @@ export const joinEvent = async (eventId: string, user: any) => {
         where: { email: user.email },
         include: { user: true },
     });
-
     if (!client) throw new Error("Client not found");
+    if (client?.user.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
     if (client.isDeleted) throw new Error("Client account is deleted");
     if (client.user.status !== "ACTIVE") throw new Error("Client account is not active");
 
@@ -442,6 +442,9 @@ export const leaveEvent = async (eventId: string, user: any) => {
     });
 
     if (!client) throw new Error("Client not found");
+
+    if (client?.user.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
+
     if (client.isDeleted) throw new Error("Client account is deleted");
     if (client.user.status !== "ACTIVE") throw new Error("Client account is not active");
     // find in event participation
@@ -494,6 +497,15 @@ export const leaveEvent = async (eventId: string, user: any) => {
 }
 // mark event as COMPLETED (only allowed when status is OPEN or FULL and event date/time has passed)
 export const completeEvent = async (eventId: string, user: any) => {
+
+    const userInfo = await prisma.user.findUnique({
+        where: { email: user.email }
+    });
+
+
+    if (!userInfo) throw new Error("User not found");
+
+    if(userInfo?.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
 
     const event = await prisma.event.findUnique({ where: { id: eventId }, include: { host: true } });
     if (!event) throw new Error('Event not found');

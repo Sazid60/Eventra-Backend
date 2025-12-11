@@ -237,12 +237,17 @@ const updateMyProfile = async (user: IAuthUser, req: Request) => {
 
     const userInfo = await prisma.user.findUniqueOrThrow({
         where: {
-            email: user?.email,
-            status: UserStatus.ACTIVE
+            email: user?.email
         }
     });
 
     console.log(userInfo)
+
+    if(!userInfo) {
+        throw new Error("User not found");
+    }
+
+    if(userInfo?.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
 
 
     if (req.file) {
