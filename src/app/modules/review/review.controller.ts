@@ -30,7 +30,21 @@ const getLatestReviews = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const checkReviewExists = catchAsync(async (req: Request, res: Response) => {
+    const { transactionId } = req.params;
+
+    const result = await reviewService.checkReviewExists(transactionId);
+
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Review check completed',
+        data: result
+    });
+});
+
 export const reviewController = {
     createReview,
-    getLatestReviews
+    getLatestReviews,
+    checkReviewExists
 };

@@ -34,102 +34,143 @@ import { sendEmail } from "../../../helpers/sendEmail";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 
-// Handle successful payment callback
+
 const successPayment = async (query: Record<string, string>) => {
-    const transactionId = query.transactionId
-    if (!transactionId) throw new Error("transactionId is required");
+    try {
 
-    const payment = await prisma.payment.findUnique({
-        where: { transactionId },
-        include: {
-            event: { select: { id: true, title: true, date: true, location: true, joiningFee: true, host: { select: { name: true, email: true } } } },
-            client: { select: { id: true, name: true, email: true, contactNumber: true } }
+        console.log("=== PAYMENT SUCCESS CALLBACK ===");
+        console.log("Full query object:", JSON.stringify(query));
+
+
+        const transactionId = query.transactionId || query.tran_id || query.txnId || query.transaction_id;
+        console.log("Extracted transactionId:", transactionId);
+
+        if (!transactionId) {
+            console.error("ERROR: No transactionId found in query");
+            throw new Error("transactionId is required in payment callback");
         }
-    });
-    if (!payment) throw new Error("Payment not found");
 
-    // Idempotency: if already processed as PAID, return immediately
-    if (payment.paymentStatus === PaymentStatus.PAID) {
-        return { success: true, message: 'Payment already processed', payment };
-    }
 
-    const result = await prisma.$transaction(async (tx) => {
-        // 1. Mark payment as PAID
-        const updatedPayment = await tx.payment.update({
-            where: { id: payment.id },
-            data: { paymentStatus: PaymentStatus.PAID }
+        const payment = await prisma.payment.findUnique({
+            where: { transactionId },
+            select: {
+                id: true,
+                transactionId: true,
+                amount: true,
+                paymentStatus: true,
+                participantId: true,
+                hostId: true,
+                createdAt: true,
+                invoiceUrl: true,
+                event: {
+                    select: {
+                        id: true,
+                        title: true,
+                        date: true,
+                        location: true,
+                        joiningFee: true,
+                        host: { select: { name: true, email: true } }
+                    }
+                },
+                client: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        contactNumber: true
+                    }
+                }
+            }
         });
 
-        // 2. Update participant status to CONFIRMED
-        let updatedParticipant = null;
-        if (payment.participantId) {
-            updatedParticipant = await tx.eventParticipant.update({
-                where: { id: payment.participantId },
+        if (!payment) {
+            console.error("ERROR: Payment not found for transactionId:", transactionId);
+            throw new Error("Payment not found for transactionId: " + transactionId);
+        }
+
+        console.log("Payment found. Current status:", payment.paymentStatus);
+
+
+        if (payment.paymentStatus === PaymentStatus.PAID) {
+            console.log("Payment already processed, skipping");
+            return { success: true, message: 'Payment already processed', payment };
+        }
+
+
+        console.log("Starting transaction...");
+        const result = await prisma.$transaction(async (tx) => {
+
+            console.log("Updating payment to PAID...");
+            const updatedPayment = await tx.payment.update({
+                where: { id: payment.id },
+                data: { paymentStatus: PaymentStatus.PAID }
+            });
+            console.log("Payment updated successfully");
+
+
+            console.log("Updating participant to CONFIRMED with transactionId:", transactionId);
+            const updatedParticipant = await tx.eventParticipant.update({
+                where: { transactionId },
                 data: { participantStatus: ParticipantStatus.CONFIRMED }
             });
-        }
+            console.log("Participant updated successfully:", updatedParticipant.id);
 
-        // 3. Distribute income: 90% host, 10% admin (add to host.income and admin.income)
-        // find host and update income
-        const host = await tx.host.findUnique({ where: { id: payment.hostId } });
-        if (host) {
-            const hostShare = Number((payment.amount * 0.9).toFixed(2));
-            await tx.host.update({ where: { id: host.id }, data: { income: { increment: hostShare } as any } });
-        }
-
-        // credit admin (pick first admin record)
-        const admin = await tx.admin.findFirst();
-        if (admin) {
-            const adminShare = Number((payment.amount * 0.1).toFixed(2));
-            await tx.admin.update({ where: { id: admin.id }, data: { income: { increment: adminShare } as any } });
-        }
-
-        //    send email will be done after transaction completes (below)
-
-        return { success: true, payment: updatedPayment, participant: updatedParticipant };
-    });
-
-    // After successful DB transaction, render invoice and send email (outside transaction)
-    try {
-        const updatedPayment = (result as any).payment;
-        const client = (payment as any).client;
-        const event = (payment as any).event;
-        const host = event?.host;
-
-        if (client && client.email) {
-            const invoiceDate = updatedPayment?.createdAt ? new Date(updatedPayment.createdAt).toLocaleString() : new Date().toLocaleString();
-
-            const templateData = {
-                invoiceNumber: updatedPayment?.transactionId || transactionId,
-                invoiceDate,
-                transactionId: updatedPayment?.transactionId || transactionId,
-                amount: updatedPayment?.amount || (payment as any).amount || 0,
-                invoiceUrl: updatedPayment?.invoiceUrl || (payment as any).invoiceUrl || null,
-                client: { name: client.name || '', email: client.email || '', contactNumber: client.contactNumber || '' },
-                event: { title: event?.title || '', dateReadable: event?.date ? new Date(event.date).toLocaleString() : '', location: event?.location || '' },
-                host: { name: host?.name || '', email: host?.email || '' },
-            };
-
-            // fire-and-forget: log errors but don't fail the payment flow
-            try {
-                await sendEmail({
-                    to: client.email,
-                    subject: `Your Invoice for ${templateData.event.title || 'Event'}`,
-                    templateName: 'invoice-payment',
-                    templateData,
-                });
-            } catch (err: any) {
-                console.log('Failed to send invoice email:', err?.message || err);
+            const host = await tx.host.findUnique({ where: { id: payment.hostId } });
+            if (host) {
+                const hostShare = Number((payment.amount * 0.9).toFixed(2));
+                await tx.host.update({ where: { id: host.id }, data: { income: { increment: hostShare } as any } });
             }
-        }
-    } catch (err: any) {
-        console.log('Invoice email creation error', err?.message || err);
-    }
 
-    return result;
+            const admin = await tx.admin.findFirst();
+            if (admin) {
+                const adminShare = Number((payment.amount * 0.1).toFixed(2));
+                await tx.admin.update({ where: { id: admin.id }, data: { income: { increment: adminShare } as any } });
+            }
+
+            return { success: true, payment: updatedPayment, participant: updatedParticipant };
+        });
+        try {
+            const updatedPayment = (result as any).payment;
+            const client = (payment as any).client;
+            const event = (payment as any).event;
+            const host = event?.host;
+
+            if (client && client.email) {
+                const invoiceDate = updatedPayment?.createdAt ? new Date(updatedPayment.createdAt).toLocaleString() : new Date().toLocaleString();
+
+                const templateData = {
+                    invoiceNumber: updatedPayment?.transactionId || transactionId,
+                    invoiceDate,
+                    transactionId: updatedPayment?.transactionId || transactionId,
+                    amount: updatedPayment?.amount || (payment as any).amount || 0,
+                    invoiceUrl: updatedPayment?.invoiceUrl || (payment as any).invoiceUrl || null,
+                    client: { name: client.name || '', email: client.email || '', contactNumber: client.contactNumber || '' },
+                    event: { title: event?.title || '', dateReadable: event?.date ? new Date(event.date).toLocaleString() : '', location: event?.location || '' },
+                    host: { name: host?.name || '', email: host?.email || '' },
+                };
+
+                try {
+                    await sendEmail({
+                        to: client.email,
+                        subject: `Your Invoice for ${templateData.event.title || 'Event'}`,
+                        templateName: 'invoice-payment',
+                        templateData,
+                    });
+                } catch (err: any) {
+                    console.log('Failed to send invoice email:', err?.message || err);
+                }
+            }
+        } catch (err: any) {
+            console.log('Invoice email creation error', err?.message || err);
+        }
+
+        return result;
+
+    } catch (error: any) {
+        throw error;
+    }
 };
 
-// Handle failed payment (e.g., declined)
 const failPayment = async (query: Record<string, string>) => {
     const transactionId = query.transactionId || query.txnId || query.transaction_id;
     if (!transactionId) throw new Error("transactionId is required");
@@ -137,26 +178,25 @@ const failPayment = async (query: Record<string, string>) => {
     const payment = await prisma.payment.findUnique({ where: { transactionId } });
     if (!payment) throw new Error("Payment not found");
 
-    // Idempotency: if already cancelled/refunded, return
     if (payment.paymentStatus === PaymentStatus.CANCELLED || payment.paymentStatus === PaymentStatus.REFUNDED) {
         return { success: true, message: 'Payment already cancelled', payment };
     }
 
     const result = await prisma.$transaction(async (tx) => {
-        // 1. Mark payment as CANCELLED
+
         const updatedPayment = await tx.payment.update({ where: { id: payment.id }, data: { paymentStatus: PaymentStatus.CANCELLED } });
 
-        // 2. Update participant status to LEFT (if exists) and release reserved seat
+
         if (payment.participantId) {
             const participant = await tx.eventParticipant.findUnique({ where: { id: payment.participantId }, select: { id: true, participantStatus: true, eventId: true } });
             if (participant && participant.participantStatus !== ParticipantStatus.LEFT) {
                 await tx.eventParticipant.update({ where: { id: participant.id }, data: { participantStatus: ParticipantStatus.LEFT } });
 
-                // 3. Increase event capacity by 1 (release reserved seat)
+
                 const event = await tx.event.findUnique({ where: { id: participant.eventId }, select: { id: true, capacity: true, status: true } });
                 if (event) {
                     await tx.event.update({ where: { id: event.id }, data: { capacity: event.capacity + 1 } });
-                    // 4. if event status is FULL change to OPEN
+
                     if (event.status === EventStatus.FULL) {
                         await tx.event.update({ where: { id: event.id }, data: { status: EventStatus.OPEN } });
                     }
@@ -170,25 +210,25 @@ const failPayment = async (query: Record<string, string>) => {
     return result;
 }
 
-// Handle cancelled/refunded payment by user
+
 const cancelPayment = async (query: Record<string, string>) => {
-    // Use same flow as failPayment but mark as CANCELLED (or REFUNDED if you prefer)
+
     const transactionId = query.transactionId || query.txnId || query.transaction_id;
     if (!transactionId) throw new Error("transactionId is required");
 
     const payment = await prisma.payment.findUnique({ where: { transactionId } });
     if (!payment) throw new Error("Payment not found");
 
-    // Idempotency check
+
     if (payment.paymentStatus === PaymentStatus.CANCELLED || payment.paymentStatus === PaymentStatus.REFUNDED) {
         return { success: true, message: 'Payment already cancelled', payment };
     }
 
     const result = await prisma.$transaction(async (tx) => {
-        // mark payment as CANCELLED (if refunded, use PaymentStatus.REFUNDED)
+
         const updatedPayment = await tx.payment.update({ where: { id: payment.id }, data: { paymentStatus: PaymentStatus.CANCELLED } });
 
-        // update participant to LEFT and release reserved seat
+
         if (payment.participantId) {
             const participant = await tx.eventParticipant.findUnique({ where: { id: payment.participantId }, select: { id: true, participantStatus: true, eventId: true } });
             if (participant && participant.participantStatus !== ParticipantStatus.LEFT) {
@@ -210,18 +250,15 @@ const cancelPayment = async (query: Record<string, string>) => {
     return result;
 };
 
-// Get user-specific payments with search and pagination
-// Admin sees all payments, Host sees only his created events' payments
-// Search by: transactionId and client name
+
 const getUserPayments = async (params: any, options: IPaginationOptions, user: any) => {
     const { page, limit, skip } = paginationHelper.calculatePagination(options);
     const { searchTerm, paymentStatus, ...filterData } = params;
 
     const andConditions: Prisma.PaymentWhereInput[] = [];
 
-    // Filter based on user role
+
     if (user.role === UserRole.HOST) {
-        // Host: find his host profile first, then filter payments for his events
         const host = await prisma.host.findUnique({
             where: { email: user.email },
             select: { id: true }
@@ -233,9 +270,7 @@ const getUserPayments = async (params: any, options: IPaginationOptions, user: a
             hostId: host.id
         });
     }
-    // ADMIN sees all payments (no additional filter)
 
-    // Search by transactionId or client name
     if (searchTerm) {
         andConditions.push({
             OR: [
@@ -245,12 +280,11 @@ const getUserPayments = async (params: any, options: IPaginationOptions, user: a
         });
     }
 
-    // Filter by payment status
     if (paymentStatus) {
         andConditions.push({ paymentStatus: paymentStatus as PaymentStatus });
     }
 
-    // Additional dynamic filters
+
     if (Object.keys(filterData).length > 0) {
         andConditions.push({
             AND: Object.keys(filterData).map(key => ({

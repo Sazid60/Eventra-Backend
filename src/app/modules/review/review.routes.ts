@@ -7,7 +7,18 @@ import { reviewController } from './review.controller';
 
 const router = express.Router();
 
-// Create review by transactionId passed as URL param
+router.get(
+    '/',
+    reviewController.getLatestReviews
+);
+
+
+router.get(
+    '/check/:transactionId',
+    reviewController.checkReviewExists
+);
+
+
 router.post(
     '/:transactionId',
     auth(UserRole.CLIENT),
@@ -15,8 +26,5 @@ router.post(
     reviewController.createReview
 );
 
-router.get(
-    '/',
-    reviewController.getLatestReviews
-);
+
 export const ReviewRoutes = router;

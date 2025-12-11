@@ -5,14 +5,14 @@ import { UserRole } from '@prisma/client';
 
 const router = express.Router();
 
-// Dashboard metadata (protected - Admin & Host only)
+// Dashboard metadata 
 router.get(
     '/',
     auth(UserRole.ADMIN, UserRole.HOST),
     MetaController.fetchDashboardMetaData
 );
 
-// Landing page stats (public endpoint)
+// Landing page stats 
 router.get(
     '/landing-page',
     MetaController.getLandingPageStats

@@ -29,10 +29,16 @@ const fetchDashboardMetaData = async (user: JwtPayload) => {
             prisma.user.count({ where: { role: UserRole.ADMIN } }),
             prisma.user.count({ where: { role: UserRole.CLIENT } }),
             prisma.user.count({ where: { role: UserRole.HOST } }),
-            prisma.event.count(),
+            await prisma.event.count({
+                where: {
+                    status: {
+                        in: [EventStatus.OPEN, EventStatus.FULL],
+                    },
+                },
+            }),
             prisma.event.count({ where: { status: EventStatus.COMPLETED } }),
             prisma.event.count({ where: { status: EventStatus.REJECTED } }),
-            prisma.payment.aggregate({ _sum: { amount: true }, where: { paymentStatus: PaymentStatus.PAID } }),
+            prisma.payment.aggregate({ _sum: { amount: true }, where: { paymentStatus: { not: PaymentStatus.CANCELLED || PaymentStatus.PENDING || PaymentStatus.REFUNDED} } }),
             prisma.admin.aggregate({ _sum: { income: true } }),
             prisma.hostApplication.count({ where: { status: HostApplicationStatus.PENDING } }),
             prisma.event.count({ where: { status: EventStatus.PENDING } })
@@ -71,7 +77,14 @@ const fetchDashboardMetaData = async (user: JwtPayload) => {
             totalPendingEvents,
             paymentsSumRes
         ] = await Promise.all([
-            prisma.event.count({ where: { hostId: host.id } }),
+            await prisma.event.count({
+                where: {
+                    hostId: host.id,
+                    status: {
+                        in: [EventStatus.OPEN, EventStatus.FULL],
+                    },
+                },
+            }),
             prisma.event.count({ where: { hostId: host.id, status: EventStatus.COMPLETED } }),
             prisma.event.count({ where: { hostId: host.id, status: EventStatus.REJECTED } }),
             prisma.event.count({ where: { hostId: host.id, status: EventStatus.PENDING } }),
@@ -98,7 +111,7 @@ const fetchDashboardMetaData = async (user: JwtPayload) => {
     throw new Error("Dashboard not available for this user role");
 };
 
-// Get common stats for landing page (public endpoint)
+
 const getLandingPageStats = async () => {
     const [
         totalEvents,
@@ -109,7 +122,13 @@ const getLandingPageStats = async () => {
         totalReviews,
         avgHostRating
     ] = await Promise.all([
-        prisma.event.count(),
+        prisma.event.count({
+            where: {
+                status: {
+                    in: [EventStatus.OPEN, EventStatus.FULL],
+                },
+            },
+        }),
         prisma.event.count({ where: { status: EventStatus.COMPLETED } }),
         prisma.payment.count({ where: { paymentStatus: PaymentStatus.PAID } }),
         prisma.user.count({ where: { role: UserRole.CLIENT } }),

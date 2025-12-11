@@ -273,17 +273,17 @@ npm run dev
 ##### Admin Login
 
 - _Admin Email_: admin@gmail.com
-- _Admin Password_: Admin123@
+- _Admin Password_: Admin@12345
 
 ##### Host Login
 
 - _Host Email_: host@gmail.com
-- _Host Password_: Host123@
+- _Host Password_: Host@12345
 
 ##### Client Login
 
 - _Client Email_: client@gmail.com
-- _Client Password_: Client123@
+- _Client Password_: Client@12345
 
 ---
 

@@ -36,6 +36,8 @@ const createEvent = async (req: Request): Promise<Event> => {
         throw new Error("User not found");
     }
 
+    if (userData.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
+
 
     try {
         const result = await prisma.$transaction(async (transactionClient) => {
@@ -60,12 +62,24 @@ const createEvent = async (req: Request): Promise<Event> => {
 };
 
 const deleteEvent = async (id: string): Promise<Event> => {
+
     const isEventExist = await prisma.event.findUnique({
-        where: { id }
+        where: { id },
+        include: { host: true }
     });
+
     if (!isEventExist) {
         throw new Error("Event not found!");
     }
+
+
+    const userInfo = await prisma.user.findUnique({
+        where: { email: isEventExist?.host.email }
+    });
+
+    if (userInfo?.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
+
+
 
     if (
         isEventExist.status !== EventStatus.CANCELLED &&
@@ -83,12 +97,21 @@ const deleteEvent = async (id: string): Promise<Event> => {
 const updateEvent = async (id: string, req: Request): Promise<Event> => {
     let newImageUrl = "";
     const existingEvent = await prisma.event.findUnique({
-        where: { id }
+        where: { id },
+        include: { host: true }
     });
 
     if (!existingEvent) {
         throw new Error("Event not found!");
     }
+
+
+    const userInfo = await prisma.user.findUnique({
+        where: { email: existingEvent?.host.email }
+    });
+
+    if (userInfo?.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
+
 
     if (
         existingEvent.status === EventStatus.CANCELLED ||
@@ -107,13 +130,13 @@ const updateEvent = async (id: string, req: Request): Promise<Event> => {
 
     console.log(updateData)
 
-    // Handle category updates: replace completely with submitted values
+
     if (req.body.category !== undefined) {
         if (Array.isArray(req.body.category) && req.body.category.length > 0) {
-            // Replace with new categories provided
+
             updateData.category = req.body.category;
         } else {
-            // If empty array submitted, keep existing categories
+
             updateData.category = existingEvent.category;
         }
     }
@@ -137,7 +160,8 @@ const updateEvent = async (id: string, req: Request): Promise<Event> => {
 
 const cancelEvent = async (id: string) => {
     const isEventExist = await prisma.event.findUniqueOrThrow({
-        where: { id }
+        where: { id },
+        include: { host: true }
     });
 
     console.log(isEventExist)
@@ -145,6 +169,13 @@ const cancelEvent = async (id: string) => {
     if (!isEventExist) {
         throw new Error("Event not found!");
     }
+
+    const userInfo = await prisma.user.findUnique({
+        where: { email: isEventExist?.host.email }
+    });
+
+    if (userInfo?.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
+
 
     if (isEventExist.status !== 'PENDING') {
         throw new Error("Only PENDING events can be canceled.");
@@ -256,19 +287,26 @@ const completeEvent = async (id: string) => {
         throw new Error('Event not found');
     }
 
-    // Only allow completion when status is OPEN or FULL
+    const userInfo = await prisma.user.findUnique({
+        where: { email: isEventExist?.host.email }
+    });
+
+    if (userInfo?.status === "SUSPENDED") throw new Error("Your account has been suspended. You cannot perform this operation.");
+
+
+
     if (!(isEventExist.status === EventStatus.OPEN || isEventExist.status === EventStatus.FULL)) {
         throw new Error('Only events with status OPEN or FULL can be marked completed');
     }
 
-    // Ensure current time is same or after event date/time
+
     const now = new Date();
     const eventDate = new Date(isEventExist.date);
     if (now.getTime() < eventDate.getTime()) {
         throw new Error('Event date/time has not occurred yet');
     }
 
-    // mark as COMPLETED
+ 
     const updated = await prisma.event.update({
         where: { id },
         include: { host: true },
