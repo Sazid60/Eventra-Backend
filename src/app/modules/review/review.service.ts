@@ -102,7 +102,22 @@ const getLatestReviews = async () => {
     return result;
 };
 
+// Check if a review exists for a given transaction ID
+const checkReviewExists = async (transactionId: string) => {
+    if (!transactionId) throw new Error('transactionId is required');
+
+    const review = await prisma.review.findFirst({
+        where: { transactionId }
+    });
+
+    return {
+        hasReviewed: !!review,
+        review: review || null
+    };
+};
+
 export const reviewService = {
     createReview,
-    getLatestReviews
+    getLatestReviews,
+    checkReviewExists
 };

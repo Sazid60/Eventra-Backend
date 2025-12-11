@@ -22,20 +22,25 @@ const loginUser = async (payload: { email: string, password: string }) => {
         }
     })
 
-    if(!user){
+    if (!user) {
         throw new ApiError(httpStatus.BAD_REQUEST, "Credential Not Valid!")
     }
 
-    
+
 
     const isCorrectPassword = await bcrypt.compare(payload.password, user.password);
     if (!isCorrectPassword) {
         throw new ApiError(httpStatus.BAD_REQUEST, "Password is incorrect!")
     }
 
-    if(user.status === "PENDING") {
+    if (user.status === "PENDING") {
         throw new ApiError(httpStatus.BAD_REQUEST, "Your Host Request is still pending. Please wait for approval.");
     }
+
+    if (user.status === UserStatus.SUSPENDED) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Your account has been suspended. Please contact support for assistance.");
+    }
+
     const userToken = createUserToken(user);
 
 
@@ -243,7 +248,7 @@ const getMe = async (user: any) => {
 
 const applyHost = async (user: any) => {
     const accessToken = user.accessToken;
-    
+
     const decodedData = jwtHelper.verifyToken(
         accessToken,
         config.jwt.jwt_secret as Secret
@@ -252,8 +257,8 @@ const applyHost = async (user: any) => {
         where: {
             id: decodedData.userId
         },
-        include:{
-            client : true
+        include: {
+            client: true
         }
     });
 
@@ -282,7 +287,7 @@ const applyHost = async (user: any) => {
             data: {
                 userId: userData.id,
                 name: userData.client!.name,
-                email : userData.client!.email
+                email: userData.client!.email
             }
         });
 
