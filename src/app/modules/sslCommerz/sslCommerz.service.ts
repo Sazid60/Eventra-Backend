@@ -62,6 +62,7 @@ const sslPaymentInit = async (payload: ISSLCommerz) => {
 
 // this function will be called in a post method backend api. 
 // the flow will be like after successful payment the IPN url (post method made by us for our backend) will be automatically called and then inside the url validate payment function will be called 
+// NOTE: This only VALIDATES the payment with SSLCommerz. Actual payment status update happens in successPayment callback.
 const validatePayment = async (payload: any) => {
     try {
         const response = await axios({
@@ -70,14 +71,10 @@ const validatePayment = async (payload: any) => {
         })
 
         console.log("sslcomeerz validate api response", response.data);
+        console.log("Payment validation successful. Status update will happen in success callback.");
 
-        await prisma.payment.update({
-            where: { transactionId: payload.tran_id },
-            data: {
-                paymentStatus: PaymentStatus.PAID,
-                invoiceUrl: "N/A"
-            }
-        })
+        // DO NOT update payment status here - let successPayment handle it
+        // This ensures participant status, income distribution, and email all happen together in one transaction
     } catch (error: any) {
         console.log(error);
         throw new ApiError(401, `Payment Validation Error, ${error.message}`)

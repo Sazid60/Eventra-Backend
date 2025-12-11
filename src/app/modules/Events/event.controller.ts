@@ -27,7 +27,6 @@ const getAllEvents = catchAsync(async (req: Request & { user?: any }, res: Respo
         user = null;
     }
 
-    console.log(req)
 
     console.log(user)
     const result = await eventService.getAllEvents(filters, options, user);
