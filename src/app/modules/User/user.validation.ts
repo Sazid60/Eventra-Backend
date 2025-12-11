@@ -62,7 +62,7 @@ const updateStatus = z.object({
 
 
 
-// Shared fields across all roles
+
 const sharedFields = {
     name: z.string().optional(),
     profilePhoto: z.string().url().optional(),
@@ -71,7 +71,7 @@ const sharedFields = {
     location: z.string().optional(),
 };
 
-// Admin update schema
+
 const updateAdmin = z.object({
     role: z.literal(UserRole.ADMIN).optional(),
     admin: z.object({
@@ -79,7 +79,7 @@ const updateAdmin = z.object({
     }).partial(),
 });
 
-// Client update schema
+
 const updateClient = z.object({
     role: z.literal(UserRole.CLIENT).optional(),
     client: z.object({
@@ -88,7 +88,7 @@ const updateClient = z.object({
     }).partial(),
 });
 
-// Host update schema
+
 const updateHost = z.object({
     role: z.literal(UserRole.HOST).optional(),
     host: z.object({
@@ -96,7 +96,7 @@ const updateHost = z.object({
     }).partial(),
 });
 
-// Unified update schema
+
  const updateProfile = z.union([updateAdmin, updateClient, updateHost]);
 
 export const userValidation = {

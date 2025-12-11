@@ -15,7 +15,6 @@ const getAllHostApplications = async (params: any, options: IPaginationOptions) 
     const { searchTerm, ...filterData } = params;
     const andConditions: Prisma.HostApplicationWhereInput[] = [];
 
-    // Only show PENDING and REJECTED applications
     andConditions.push({
         status: {
             in: [HostApplicationStatus.PENDING]
@@ -77,15 +76,14 @@ const getAllClients = async (params: any, options: IPaginationOptions) => {
 
     const andConditions: Prisma.UserWhereInput[] = [];
 
-    // must be CLIENT
     andConditions.push({ role: UserRole.CLIENT });
 
-    // ensure only users who actually have a client profile
+
     andConditions.push({
         client: { isNot: null }
     });
 
-    // globally searchable fields (User.email + Client.name + Client.contactNumber)
+
     if (searchTerm) {
         andConditions.push({
             OR: [
@@ -95,12 +93,12 @@ const getAllClients = async (params: any, options: IPaginationOptions) => {
         });
     }
 
-    // status filter applies to User.status
+
     if (status) {
         andConditions.push({ status: status as UserStatus });
     }
 
-    // dynamic filtering for other fields
+
     if (Object.keys(filterData).length > 0) {
         const extraFilters: Prisma.UserWhereInput[] = [];
 
@@ -108,12 +106,12 @@ const getAllClients = async (params: any, options: IPaginationOptions) => {
             const value = (filterData as any)[key];
 
             if (clientSearchableFields.includes(key)) {
-                // apply filter on nested client field
+
                 extraFilters.push({
                     client: { [key]: { equals: value } }
                 });
             } else {
-                // filter on user field
+
                 extraFilters.push({
                     [key]: { equals: value }
                 });

@@ -18,7 +18,6 @@ const loginUser = async (payload: { email: string, password: string }) => {
     const user = await prisma.user.findFirst({
         where: {
             email: payload.email,
-            // status: UserStatus.ACTIVE
         }
     })
 

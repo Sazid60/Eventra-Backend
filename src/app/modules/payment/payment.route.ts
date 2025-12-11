@@ -10,7 +10,7 @@ router.post("/fail", PaymentController.failPayment);
 router.post("/cancel", PaymentController.cancelPayment);
 router.post("/validate-payment", PaymentController.validatePayment);
 
-// Get user-specific payments (Admin & Host only)
+// Get user-specific payments 
 router.get(
     "/",
     auth(UserRole.ADMIN, UserRole.HOST),

@@ -12,13 +12,13 @@ router.get(
     reviewController.getLatestReviews
 );
 
-// Check if review exists for a transaction (public endpoint)
+
 router.get(
     '/check/:transactionId',
     reviewController.checkReviewExists
 );
 
-// Create review by transactionId passed as URL param
+
 router.post(
     '/:transactionId',
     auth(UserRole.CLIENT),
