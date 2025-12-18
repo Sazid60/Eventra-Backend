@@ -290,6 +290,7 @@ npm run dev
 - _Client Email_: client@gmail.com
 - _Client Password_: Client@12345
 
+- credentials are added in login page just hit and Login for testing
 ---
 
 ## Core API Surface (high level)
