@@ -142,10 +142,8 @@ const resetPassword = async (token: string, payload: { id: string, password: str
         throw new ApiError(httpStatus.FORBIDDEN, "Forbidden!")
     }
 
-    // hash password
     const password = await bcrypt.hash(payload.password, Number(config.salt_round));
 
-    // update into database
     await prisma.user.update({
         where: {
             id: payload.id

@@ -398,6 +398,8 @@ export const joinEvent = async (eventId: string, user: any) => {
             transactionId: transactionId
         }
 
+        console.log(sslPayload)
+
         const sslPayment = await SSLService.sslPaymentInit(sslPayload)
 
         return {

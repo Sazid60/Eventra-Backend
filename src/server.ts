@@ -18,6 +18,7 @@ async function bootstrap() {
       console.log(`Server is running on http://localhost:${config.port}`);
     });
 
+    console.log("Node runtime version:", process.version);
  
     const exitHandler = () => {
       if (server) {
